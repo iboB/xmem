@@ -1,3 +1,6 @@
+# Copyright (c) Borislav Stanimirov
+# SPDX-License-Identifier: MIT
+#
 cmake_minimum_required(VERSION 3.14)
 
 include(./get_cpm.cmake)

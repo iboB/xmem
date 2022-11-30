@@ -120,7 +120,107 @@ unique_ptr<T> make_unique_for_overwrite() {
 
 template <typename T, typename D>
 class unique_ptr<T, D&> : public impl::uptr_common<T*> {
+    using common = impl::uptr_common<T*>;
+    D* m_deleter;
+public:
+    using pointer = typename common::pointer;
+    using element_type = T;
+    using deleter_type = D&;
 
+    unique_ptr(pointer p, D& d) noexcept : common(p), m_deleter(&d) {}
+    explicit unique_ptr(D& d) noexcept : common(nullptr), m_deleter(&d) {}
+    ~unique_ptr() {
+        if (this->m_ptr) {
+            (*m_deleter)(this->m_ptr);
+        }
+    }
+
+    unique_ptr& operator=(std::nullptr_t) noexcept {
+        reset();
+        return *this;
+    }
+
+    unique_ptr(unique_ptr&& other) noexcept : common(other.release()), m_deleter(&other.get_deleter()) {}
+    unique_ptr& operator=(unique_ptr&& other) noexcept {
+        reset(other.release());
+        m_deleter = &other.get_deleter();
+        return *this;
+    }
+
+    template <typename U, typename D2>
+    unique_ptr(unique_ptr<U, D2>&& other) noexcept : common(other.release()), m_deleter(&other.get_deleter()) {}
+
+    void reset(pointer p = pointer()) noexcept {
+        auto old = this->m_ptr;
+        this->m_ptr = p;
+        if (old) {
+            (*m_deleter)(old);
+        }
+    }
+
+    void swap(unique_ptr& other) { common::swap(other); }
+    using common::release;
+    using common::operator bool;
+    using common::get;
+    using common::operator->;
+    using common::operator*;
+
+    [[nodiscard]] D& get_deleter() noexcept { return *m_deleter; }
+    [[nodiscard]] const D& get_deleter() const noexcept { return *m_deleter; }
+};
+
+template <typename T, typename B>
+class unique_ptr<T, void(*)(B*)> : public impl::uptr_common<T*> {
+    static_assert(std::is_convertible_v<B*, T*>, "unique_ptr type needs to be convertible to deleter type");
+    using common = impl::uptr_common<T*>;
+    void (*m_deleter)(B*);
+public:
+    using pointer = typename common::pointer;
+    using element_type = T;
+    using deleter_type = void(*)(B*);
+
+    unique_ptr(pointer p, deleter_type d) noexcept : common(p), m_deleter(d) {}
+    unique_ptr(pointer, nullptr_t) = delete;
+    explicit unique_ptr(deleter_type d) noexcept : common(nullptr), m_deleter(d) {}
+    explicit unique_ptr(nullptr_t) = delete;
+    ~unique_ptr() {
+        if (this->m_ptr) {
+            m_deleter(this->m_ptr);
+        }
+    }
+
+    unique_ptr& operator=(std::nullptr_t) noexcept {
+        reset();
+        return *this;
+    }
+
+    unique_ptr(unique_ptr&& other) noexcept : common(other.release()), m_deleter(other.get_deleter()) {}
+    unique_ptr& operator=(unique_ptr&& other) noexcept {
+        reset(other.release());
+        m_deleter = other.get_deleter();
+        return *this;
+    }
+
+    template <typename U>
+    unique_ptr(unique_ptr<U, deleter_type>&& other) noexcept : common(other.release()), m_deleter(other.get_deleter()) {}
+
+    void reset(pointer p = pointer()) noexcept {
+        auto old = this->m_ptr;
+        this->m_ptr = p;
+        if (old) {
+            m_deleter(old);
+        }
+    }
+
+    void swap(unique_ptr& other) { common::swap(other); }
+    using common::release;
+    using common::operator bool;
+    using common::get;
+    using common::operator->;
+    using common::operator*;
+
+    [[nodiscard]] deleter_type get_deleter() noexcept { return *m_deleter; }
+    [[nodiscard]] const deleter_type get_deleter() const noexcept { return *m_deleter; }
 };
 
 // compare
