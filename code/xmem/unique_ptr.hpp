@@ -2,34 +2,63 @@
 // SPDX-License-Identifier: MIT
 //
 #pragma once
+#include "default_delete.hpp"
 
 #include <cstddef> // for nullptr_t
 #include <utility> // for std::forward at the bottom
 
 namespace xmem {
 
+namespace impl {
+template <typename Ptr>
+class uptr_common {
+protected:
+    Ptr m_ptr = Ptr();
+
+    void swap(uptr_common& other) noexcept {
+        auto p = m_ptr;
+        m_ptr = other.m_ptr;
+        other.m_ptr = p;
+    }
+public:
+    uptr_common() = default;
+    uptr_common(Ptr ptr) : m_ptr(ptr) {}
+
+    uptr_common(const uptr_common&) = delete;
+    uptr_common& operator=(const uptr_common&) = delete;
+
+    using pointer = Ptr;
+
+    pointer release() noexcept {
+        auto old = m_ptr;
+        m_ptr = Ptr();
+        return old;
+    }
+
+    explicit operator bool() const noexcept { return !!m_ptr; }
+
+    pointer get() const noexcept { return m_ptr; }
+    decltype(auto) operator*() const noexcept { return *m_ptr; }
+    pointer operator->() const noexcept { return m_ptr; }
+};
+}
+
 // Unique pointer class to guarantee that the destructor of the managed object
 // is called before the pointer itself is ivalidated.
 // This allows complex self-referencing from the managed object.
 // Not all standard library implementation have this guarantee :(
 // More here: https://ibob.bg/blog/2019/11/07/dont-use-unique_ptr-for-pimpl/
-template <typename T>
-class unique_ptr {
+template <typename T, typename D = default_delete<T>>
+class unique_ptr : public impl::uptr_common<T*>, private D /* inherit from deleter to make use of EBO */ {
+    using common = impl::uptr_common<T*>;
 public:
-    using pointer = T*;
+    using pointer = typename impl::uptr_common<T*>::pointer;
+    using element_type = T;
+    using deleter_type = D;
 
     unique_ptr() noexcept = default;
-    explicit unique_ptr(pointer p) noexcept : m_ptr(p) {}
-    ~unique_ptr() { delete m_ptr; }
-
-    unique_ptr(const unique_ptr&) = delete;
-    unique_ptr& operator=(const unique_ptr&) = delete;
-
-    unique_ptr(unique_ptr&& other) noexcept : m_ptr(other.release()) {}
-    unique_ptr& operator=(unique_ptr&& other) noexcept {
-        reset(other.release());
-        return *this;
-    }
+    explicit unique_ptr(pointer p) noexcept : common(p) {}
+    ~unique_ptr() { D::operator()(this->m_ptr); }
 
     unique_ptr(std::nullptr_t) noexcept {}
     unique_ptr& operator=(std::nullptr_t) noexcept {
@@ -37,26 +66,23 @@ public:
         return *this;
     }
 
-    pointer release() noexcept {
-        auto old = m_ptr;
-        m_ptr = nullptr;
-        return old;
+    unique_ptr(unique_ptr&& other) noexcept : common(other.release()), D(std::move(other)) {}
+    unique_ptr& operator=(unique_ptr&& other) noexcept {
+        reset(other.release());
+        *((D*)this) = std::move(other);
+        return *this;
     }
 
-    void reset(pointer p = nullptr) noexcept {
-        auto old = m_ptr;
-        m_ptr = p;
-        delete old;
+    void reset(pointer p = pointer()) noexcept {
+        auto old = this->m_ptr;
+        this->m_ptr = p;
+        D::operator()(old);
     }
 
-    explicit operator bool() const noexcept { return !!m_ptr; }
+    void swap(unique_ptr& other) { common::swap(other); }
 
-    pointer get() const noexcept { return m_ptr; }
-    T& operator*() const noexcept { return *m_ptr; }
-    T* operator->() const noexcept { return m_ptr; }
-
-private:
-    pointer m_ptr = nullptr;
+    D& get_deleter() noexcept { return *this; }
+    const D& get_deleter() const noexcept { return *this; }
 };
 
 template <typename T, typename... Args>
