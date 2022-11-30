@@ -14,8 +14,7 @@ namespace xmem {
 // Not all standard library implementation have this guarantee :(
 // More here: https://ibob.bg/blog/2019/11/07/dont-use-unique_ptr-for-pimpl/
 template <typename T>
-class unique_ptr
-{
+class unique_ptr {
 public:
     using pointer = T*;
 
@@ -27,28 +26,24 @@ public:
     unique_ptr& operator=(const unique_ptr&) = delete;
 
     unique_ptr(unique_ptr&& other) noexcept : m_ptr(other.release()) {}
-    unique_ptr& operator=(unique_ptr&& other) noexcept
-    {
+    unique_ptr& operator=(unique_ptr&& other) noexcept {
         reset(other.release());
         return *this;
     }
 
     unique_ptr(std::nullptr_t) noexcept {}
-    unique_ptr& operator=(std::nullptr_t) noexcept
-    {
+    unique_ptr& operator=(std::nullptr_t) noexcept {
         reset();
         return *this;
     }
 
-    pointer release() noexcept
-    {
+    pointer release() noexcept {
         auto old = m_ptr;
         m_ptr = nullptr;
         return old;
     }
 
-    void reset(pointer p = nullptr) noexcept
-    {
+    void reset(pointer p = nullptr) noexcept {
         auto old = m_ptr;
         m_ptr = p;
         delete old;
@@ -65,21 +60,18 @@ private:
 };
 
 template <typename T, typename... Args>
-unique_ptr<T> make_unique(Args&&... args)
-{
+unique_ptr<T> make_unique(Args&&... args) {
     return unique_ptr<T>{new T(std::forward<Args>(args)...)};
 }
 
 template <typename T>
-auto make_unique_ptr(T&& t) -> unique_ptr<typename std::remove_reference<T>::type>
-{
+auto make_unique_ptr(T&& t) -> unique_ptr<typename std::remove_reference<T>::type> {
     using RRT = typename std::remove_reference<T>::type;
     return unique_ptr<RRT>(new RRT(std::forward<T>(t)));
 }
 
 template <typename T>
-unique_ptr<T> make_unique_for_overwrite()
-{
+unique_ptr<T> make_unique_for_overwrite() {
     return unique_ptr<T>(new T);
 }
 

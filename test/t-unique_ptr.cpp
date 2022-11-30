@@ -10,8 +10,7 @@
 
 TEST_SUITE_BEGIN("unique_ptr");
 
-struct obj : public doctest::util::lifetime_counter<obj>
-{
+struct obj : public doctest::util::lifetime_counter<obj> {
     obj() = default;
     obj(int a, std::string b) : a(a), b(b) {}
 
@@ -19,8 +18,7 @@ struct obj : public doctest::util::lifetime_counter<obj>
     std::string b;
 };
 
-TEST_CASE("basic")
-{
+TEST_CASE("basic") {
     obj::lifetime_stats stats;
 
     {
@@ -55,8 +53,7 @@ TEST_CASE("basic")
 }
 
 
-TEST_CASE("make_unique_ptr")
-{
+TEST_CASE("make_unique_ptr") {
     std::vector<int> vec = {1, 2, 3};
     auto copy = xmem::make_unique_ptr(vec);
     CHECK(copy->size() == 3);
