@@ -18,6 +18,27 @@ struct obj : public doctest::util::lifetime_counter<obj> {
     std::string b;
 };
 
+struct parent : public doctest::util::lifetime_counter<parent> {
+    int a;
+    explicit parent(int a = 0) : a(a) {}
+    virtual ~parent() = default;
+    virtual int val() const { return a; }
+};
+
+struct child : parent {
+    int b;
+    child(int a, int b) : parent(a), b(b) {}
+    virtual int val() const override { return a + b; }
+};
+
+struct obj_deleter {
+    int dels = 0;
+    void operator()(obj* ptr) {
+        ++dels;
+        delete ptr;
+    }
+};
+
 TEST_CASE("basic") {
     using iptr = xmem::unique_ptr<int>;
     static_assert(sizeof(iptr) == sizeof(int*));
@@ -51,6 +72,8 @@ TEST_CASE("basic") {
         CHECK(p);
         CHECK(p.get() == &i);
         CHECK(*p == 10);
+        *p = 5;
+        CHECK(*p == 5);
         CHECK(p.release() == &i);
         CHECK_FALSE(p.release());
         p = nullptr;
@@ -69,6 +92,40 @@ TEST_CASE("basic") {
         CHECK(stats.total == 1);
         CHECK(stats.living == 0);
     }
+}
+
+TEST_CASE("compare / swap") {
+    int vals[] = {1, 2};
+
+    using iptr = xmem::unique_ptr<int>;
+    iptr p0(vals + 0);
+    iptr p0a(vals + 0);
+    iptr p1(vals + 1);
+
+    CHECK(p0 == p0a);
+    CHECK(p1 == p1);
+    CHECK_FALSE(p0 == p1);
+    CHECK(p0 != p1);
+    CHECK_FALSE(p0 != p0a);
+    CHECK(p0 < p1);
+    CHECK_FALSE(p1 < p0);
+    CHECK(p0 <= p1);
+    CHECK(p0 <= p0a);
+    CHECK_FALSE(p1 <= p0);
+    CHECK(p1 > p0);
+    CHECK_FALSE(p0 > p1);
+    CHECK(p1 >= p0);
+    CHECK(p0a >= p0);
+    CHECK_FALSE(p0 >= p1);
+
+    p1.swap(p0);
+    CHECK(p0.get() == vals + 1);
+    CHECK(p1.get() == vals + 0);
+    CHECK(p1 < p0);
+
+    p0.release();
+    p0a.release();
+    p1.release();
 }
 
 TEST_CASE("make_unique") {
@@ -95,6 +152,54 @@ TEST_CASE("make_unique") {
     CHECK(stats.total == 1);
 }
 
+TEST_CASE("template move") {
+    parent::lifetime_stats stats;
+
+    {
+        auto c = xmem::make_unique<child>(1, 2);
+        xmem::unique_ptr<parent> p = std::move(c);
+        CHECK_FALSE(c);
+        CHECK(p);
+        CHECK(p->a == 1);
+        CHECK(p->val() == 3);
+    }
+
+    CHECK(stats.living == 0);
+    CHECK(stats.total == 1);
+
+    {
+        auto p = xmem::make_unique<parent>(5);
+        auto c = xmem::make_unique<child>(10, 20);
+        p = std::move(c);
+        CHECK(p->val() == 30);
+    }
+
+    CHECK(stats.living == 0);
+    CHECK(stats.total == 3);
+}
+
+TEST_CASE("make_unique_for_overwrite") {
+    // should compile
+    auto ip = xmem::make_unique_for_overwrite<int>();
+    CHECK(ip);
+
+    auto op = xmem::make_unique_for_overwrite<obj>();
+    CHECK(op->a == 11);
+}
+
+TEST_CASE("make_unique_ptr") {
+    std::vector<int> vec = {1, 2, 3};
+    auto copy = xmem::make_unique_ptr(vec);
+    CHECK(copy->size() == 3);
+    CHECK(vec.size() == 3);
+    CHECK(vec.data() != copy->data());
+    copy->at(1) = 5;
+    CHECK(*copy == std::vector<int>({1, 5, 3}));
+    auto vdata = vec.data();
+    auto heist = xmem::make_unique_ptr(std::move(vec));
+    CHECK(heist->size() == 3);
+    CHECK(heist->data() == vdata);
+}
 
 TEST_CASE("make_unique_ptr") {
     std::vector<int> vec = {1, 2, 3};

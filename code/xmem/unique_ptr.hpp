@@ -4,8 +4,8 @@
 #pragma once
 #include "default_delete.hpp"
 
-#include <cstddef> // for nullptr_t
-#include <utility> // for std::forward at the bottom
+#include <cstddef> // nullptr_t
+#include <utility> // std::forward
 
 namespace xmem {
 
@@ -21,8 +21,8 @@ protected:
         other.m_ptr = p;
     }
 public:
-    uptr_common() = default;
-    uptr_common(Ptr ptr) : m_ptr(ptr) {}
+    uptr_common() noexcept = default;
+    uptr_common(Ptr ptr) noexcept : m_ptr(ptr) {}
 
     uptr_common(const uptr_common&) = delete;
     uptr_common& operator=(const uptr_common&) = delete;
@@ -49,10 +49,10 @@ public:
 // Not all standard library implementation have this guarantee :(
 // More here: https://ibob.bg/blog/2019/11/07/dont-use-unique_ptr-for-pimpl/
 template <typename T, typename D = default_delete<T>>
-class unique_ptr : public impl::uptr_common<T*>, private D /* inherit from deleter to make use of EBO */ {
+class unique_ptr : private impl::uptr_common<T*>, private D /* inherit from deleter to make use of EBO */ {
     using common = impl::uptr_common<T*>;
 public:
-    using pointer = typename impl::uptr_common<T*>::pointer;
+    using pointer = typename common::pointer;
     using element_type = T;
     using deleter_type = D;
 
@@ -66,12 +66,18 @@ public:
         return *this;
     }
 
-    unique_ptr(unique_ptr&& other) noexcept : common(other.release()), D(std::move(other)) {}
+    unique_ptr(unique_ptr&& other) noexcept : common(other.release()), D(std::move(other.get_deleter())) {}
     unique_ptr& operator=(unique_ptr&& other) noexcept {
         reset(other.release());
-        *((D*)this) = std::move(other);
+        get_deleter() = std::move(other.get_deleter());
         return *this;
     }
+
+    template <typename D2>
+    unique_ptr(pointer p, D2&& d) noexcept : common(p), D(std::forward<D2>(d)) {}
+
+    template <typename U, typename D2>
+    unique_ptr(unique_ptr<U, D2>&& other) noexcept : common(other.release()), D(std::move(other.get_deleter())) {}
 
     void reset(pointer p = pointer()) noexcept {
         auto old = this->m_ptr;
@@ -80,6 +86,11 @@ public:
     }
 
     void swap(unique_ptr& other) { common::swap(other); }
+    using common::release;
+    using common::operator bool;
+    using common::get;
+    using common::operator->;
+    using common::operator*;
 
     D& get_deleter() noexcept { return *this; }
     const D& get_deleter() const noexcept { return *this; }
@@ -100,5 +111,24 @@ template <typename T>
 unique_ptr<T> make_unique_for_overwrite() {
     return unique_ptr<T>(new T);
 }
+
+template <typename T, typename D>
+class unique_ptr<T, D&> : public impl::uptr_common<T*> {
+
+};
+
+// compare
+template <typename T1, typename D1, typename T2, typename D2>
+bool operator==(const xmem::unique_ptr<T1, D1>& u1, const xmem::unique_ptr<T2, D2>& u2) { return u1.get() == u2.get(); }
+template <typename T1, typename D1, typename T2, typename D2>
+bool operator!=(const xmem::unique_ptr<T1, D1>& u1, const xmem::unique_ptr<T2, D2>& u2) { return u1.get() != u2.get(); }
+template <typename T1, typename D1, typename T2, typename D2>
+bool operator<(const xmem::unique_ptr<T1, D1>& u1, const xmem::unique_ptr<T2, D2>& u2) { return u1.get() < u2.get(); }
+template <typename T1, typename D1, typename T2, typename D2>
+bool operator<=(const xmem::unique_ptr<T1, D1>& u1, const xmem::unique_ptr<T2, D2>& u2) { return u1.get() <= u2.get(); }
+template <typename T1, typename D1, typename T2, typename D2>
+bool operator>(const xmem::unique_ptr<T1, D1>& u1, const xmem::unique_ptr<T2, D2>& u2) { return u1.get() > u2.get(); }
+template <typename T1, typename D1, typename T2, typename D2>
+bool operator>=(const xmem::unique_ptr<T1, D1>& u1, const xmem::unique_ptr<T2, D2>& u2) { return u1.get() >= u2.get(); }
 
 }
