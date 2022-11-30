@@ -255,11 +255,11 @@ TEST_CASE("deleter") {
 }
 
 TEST_CASE("ref deleter") {
-    using iptr = xmem::unique_ptr<int, test_deleter>;
+    using iptr = xmem::unique_ptr<int, test_deleter&>;
     static_assert(sizeof(iptr) == sizeof(int*) + sizeof(test_deleter*));
     static_assert(std::is_same_v<iptr::pointer, int*>);
     static_assert(std::is_same_v<iptr::element_type, int>);
-    static_assert(std::is_same_v<iptr::deleter_type, test_deleter>);
+    static_assert(std::is_same_v<iptr::deleter_type, test_deleter&>);
 
     //obj::lifetime_stats stats;
 

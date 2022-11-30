@@ -112,7 +112,7 @@ int main()
         throw std::runtime_error(""); // `p` would leak here if it were instead a plain pointer
     }
     catch (const std::exception&) { std::cout << "Caught exception\n"; }
-    /*
+
     std::cout << "\n" "5) Array form of unique_ptr demo\n";
     {
         xmem::unique_ptr<D[]> p(new D[3]);
@@ -121,10 +121,9 @@ int main()
     std::cout << "\n" "6) Linked list demo\n";
     {
         List wall;
-        for (int beer = 0; beer != 1'000'000; ++beer)
+        for (int beer = 0; beer != 1'000; ++beer)
             wall.push(beer);
 
-        std::cout << "1'000'000 bottles of beer on the wall...\n";
+        std::cout << "1'000 bottles of beer on the wall...\n";
     } // destroys all the beers
-    */
 }

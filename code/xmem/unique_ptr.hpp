@@ -237,7 +237,9 @@ public:
     unique_ptr() noexcept = default;
     explicit unique_ptr(pointer p) noexcept : common(p) {}
     ~unique_ptr() {
-        reset();
+        if (this->m_ptr) {
+            D::operator()(this->m_ptr);
+        }
     }
 
     unique_ptr(std::nullptr_t) noexcept {}
@@ -256,22 +258,11 @@ public:
     template <typename D2>
     unique_ptr(pointer p, D2&& d) noexcept : common(p), D(std::forward<D2>(d)) {}
 
-    template <typename U, typename D2, typename = std::enable_if_t<std::is_convertible_v<U(*)[], T(*)[]>>>
-    unique_ptr(unique_ptr<U[], D2>&& other) noexcept : common(other.release()), D(std::move(other.get_deleter())) {}
-
-    void reset(nullptr_t = nullptr) {
-        if (this->m_ptr) {
-            D::operator()(this->m_ptr);
-            this->m_ptr = pointer();
-        }
-    }
-
-    template <typename U*>
-    std::enable_if_t<std::is_convertible_v<U(*)[], T(*)[]>> reset(U* p) noexcept {
+    void reset(pointer p = pointer()) noexcept {
         auto old = this->m_ptr;
         this->m_ptr = p;
         if (old) {
-            D::operator()(old);
+            m_deleter(old);
         }
     }
 
@@ -284,6 +275,18 @@ public:
     [[nodiscard]] D& get_deleter() noexcept { return *this; }
     [[nodiscard]] const D& get_deleter() const noexcept { return *this; }
 };
+
+template <typename T, typename... Args>
+std::enable_if_t<std::is_array_v<T>, unique_ptr<T>>
+make_unique(size_t n) {
+    return unique_ptr<T>{new std::remove_extent_t<T>[n]()};
+}
+template <typename T>
+std::enable_if_t<std::is_array_v<T>, unique_ptr<T>>
+make_unique_for_overwrite(size_t n) {
+    return unique_ptr<T>{new std::remove_extent_t<T>[n]};
+}
+
 
 // compare
 template <typename T1, typename D1, typename T2, typename D2>
