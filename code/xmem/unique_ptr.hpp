@@ -4,7 +4,7 @@
 #pragma once
 #include "default_delete.hpp"
 
-#include <cstddef> // nullptr_t
+#include <cstddef> // nullptr_t, size_t
 #include <utility> // std::forward
 
 namespace xmem {
@@ -40,13 +40,15 @@ public:
     [[nodiscard]] pointer get() const noexcept { return m_ptr; }
     decltype(auto) operator*() const noexcept { return *m_ptr; }
     pointer operator->() const noexcept { return m_ptr; }
+
+    decltype(auto) operator[](size_t i) const noexcept { return m_ptr[i]; }
 };
 }
 
 // Unique pointer class to guarantee that the destructor of the managed object
 // is called before the pointer itself is ivalidated.
 // This allows complex self-referencing from the managed object.
-// Not all standard library implementation have this guarantee :(
+// Not all standard library implementations have this guarantee :(
 // More here: https://ibob.bg/blog/2019/11/07/dont-use-unique_ptr-for-pimpl/
 template <typename T, typename D = default_delete<T>>
 class unique_ptr : private impl::uptr_common<T*>, private D /* inherit from deleter to make use of EBO */ {
@@ -103,7 +105,8 @@ public:
 };
 
 template <typename T, typename... Args>
-unique_ptr<T> make_unique(Args&&... args) {
+std::enable_if_t<!std::is_array_v<T>, unique_ptr<T>>
+make_unique(Args&&... args) {
     return unique_ptr<T>{new T(std::forward<Args>(args)...)};
 }
 
@@ -114,7 +117,8 @@ auto make_unique_ptr(T&& t) -> unique_ptr<typename std::remove_reference<T>::typ
 }
 
 template <typename T>
-unique_ptr<T> make_unique_for_overwrite() {
+std::enable_if_t<!std::is_array_v<T>, unique_ptr<T>>
+make_unique_for_overwrite() {
     return unique_ptr<T>(new T);
 }
 
@@ -220,6 +224,65 @@ public:
     using common::operator*;
 
     [[nodiscard]] deleter_type get_deleter() const noexcept { return *m_deleter; }
+};
+
+template <typename T, typename D>
+class unique_ptr<T[], D> : private impl::uptr_common<T*>, private D /* inherit from deleter to make use of EBO */ {
+    using common = impl::uptr_common<T*>;
+public:
+    using pointer = typename common::pointer;
+    using element_type = T;
+    using deleter_type = D;
+
+    unique_ptr() noexcept = default;
+    explicit unique_ptr(pointer p) noexcept : common(p) {}
+    ~unique_ptr() {
+        reset();
+    }
+
+    unique_ptr(std::nullptr_t) noexcept {}
+    unique_ptr& operator=(std::nullptr_t) noexcept {
+        reset();
+        return *this;
+    }
+
+    unique_ptr(unique_ptr&& other) noexcept : common(other.release()), D(std::move(other.get_deleter())) {}
+    unique_ptr& operator=(unique_ptr&& other) noexcept {
+        reset(other.release());
+        get_deleter() = std::move(other.get_deleter());
+        return *this;
+    }
+
+    template <typename D2>
+    unique_ptr(pointer p, D2&& d) noexcept : common(p), D(std::forward<D2>(d)) {}
+
+    template <typename U, typename D2, typename = std::enable_if_t<std::is_convertible_v<U(*)[], T(*)[]>>>
+    unique_ptr(unique_ptr<U[], D2>&& other) noexcept : common(other.release()), D(std::move(other.get_deleter())) {}
+
+    void reset(nullptr_t = nullptr) {
+        if (this->m_ptr) {
+            D::operator()(this->m_ptr);
+            this->m_ptr = pointer();
+        }
+    }
+
+    template <typename U*>
+    std::enable_if_t<std::is_convertible_v<U(*)[], T(*)[]>> reset(U* p) noexcept {
+        auto old = this->m_ptr;
+        this->m_ptr = p;
+        if (old) {
+            D::operator()(old);
+        }
+    }
+
+    void swap(unique_ptr& other) { common::swap(other); }
+    using common::release;
+    using common::operator bool;
+    using common::get;
+    using common::operator[];
+
+    [[nodiscard]] D& get_deleter() noexcept { return *this; }
+    [[nodiscard]] const D& get_deleter() const noexcept { return *this; }
 };
 
 // compare
