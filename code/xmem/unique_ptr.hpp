@@ -219,8 +219,7 @@ public:
     using common::operator->;
     using common::operator*;
 
-    [[nodiscard]] deleter_type get_deleter() noexcept { return *m_deleter; }
-    [[nodiscard]] const deleter_type get_deleter() const noexcept { return *m_deleter; }
+    [[nodiscard]] deleter_type get_deleter() const noexcept { return *m_deleter; }
 };
 
 // compare
