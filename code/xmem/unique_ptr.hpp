@@ -29,7 +29,7 @@ public:
 
     using pointer = Ptr;
 
-    pointer release() noexcept {
+    [[nodiscard]] pointer release() noexcept {
         auto old = m_ptr;
         m_ptr = Ptr();
         return old;
@@ -37,7 +37,7 @@ public:
 
     explicit operator bool() const noexcept { return !!m_ptr; }
 
-    pointer get() const noexcept { return m_ptr; }
+    [[nodiscard]] pointer get() const noexcept { return m_ptr; }
     decltype(auto) operator*() const noexcept { return *m_ptr; }
     pointer operator->() const noexcept { return m_ptr; }
 };
@@ -58,7 +58,11 @@ public:
 
     unique_ptr() noexcept = default;
     explicit unique_ptr(pointer p) noexcept : common(p) {}
-    ~unique_ptr() { D::operator()(this->m_ptr); }
+    ~unique_ptr() {
+        if (this->m_ptr) {
+            D::operator()(this->m_ptr);
+        }
+    }
 
     unique_ptr(std::nullptr_t) noexcept {}
     unique_ptr& operator=(std::nullptr_t) noexcept {
@@ -82,7 +86,9 @@ public:
     void reset(pointer p = pointer()) noexcept {
         auto old = this->m_ptr;
         this->m_ptr = p;
-        D::operator()(old);
+        if (old) {
+            D::operator()(old);
+        }
     }
 
     void swap(unique_ptr& other) { common::swap(other); }
@@ -92,8 +98,8 @@ public:
     using common::operator->;
     using common::operator*;
 
-    D& get_deleter() noexcept { return *this; }
-    const D& get_deleter() const noexcept { return *this; }
+    [[nodiscard]] D& get_deleter() noexcept { return *this; }
+    [[nodiscard]] const D& get_deleter() const noexcept { return *this; }
 };
 
 template <typename T, typename... Args>

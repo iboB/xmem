@@ -31,12 +31,17 @@ struct child : parent {
     virtual int val() const override { return a + b; }
 };
 
-struct obj_deleter {
-    int dels = 0;
-    void operator()(obj* ptr) {
+struct test_deleter {
+    intptr_t dels = 0;
+    void operator()(int* iptr) {
         ++dels;
-        delete ptr;
+        delete iptr;
     }
+    void operator()(obj* optr) {
+        ++dels;
+        delete optr;
+    }
+
 };
 
 TEST_CASE("basic") {
@@ -123,9 +128,9 @@ TEST_CASE("compare / swap") {
     CHECK(p1.get() == vals + 0);
     CHECK(p1 < p0);
 
-    p0.release();
-    p0a.release();
-    p1.release();
+    CHECK(p0.release() == vals + 1);
+    CHECK(p0a.release() == vals + 0);
+    CHECK(p1.release() == vals + 0);
 }
 
 TEST_CASE("make_unique") {
@@ -213,4 +218,72 @@ TEST_CASE("make_unique_ptr") {
     auto heist = xmem::make_unique_ptr(std::move(vec));
     CHECK(heist->size() == 3);
     CHECK(heist->data() == vdata);
+}
+
+TEST_CASE("deleter") {
+    using optr = xmem::unique_ptr<obj, test_deleter>;
+    static_assert(sizeof(optr) == sizeof(obj*) + sizeof(intptr_t));
+    static_assert(std::is_same_v<optr::pointer, obj*>);
+    static_assert(std::is_same_v<optr::element_type, obj>);
+    static_assert(std::is_same_v<optr::deleter_type, test_deleter>);
+
+    obj::lifetime_stats stats;
+
+    {
+        optr e;
+        e.reset();
+        CHECK(e.get_deleter().dels == 0);
+    }
+
+    {
+        optr o(new obj(44, "x"));
+        o.reset();
+        CHECK(o.get_deleter().dels == 1);
+
+        o.reset(new obj(21, "xy"));
+        optr o2(new obj(33, "xyz"));
+        o = std::move(o2);
+        CHECK(o.get_deleter().dels == 0);
+        CHECK(o2.get_deleter().dels == 0);
+
+        CHECK(stats.living == 1);
+        CHECK(stats.total == 3);
+    }
+
+    CHECK(stats.living == 0);
+    CHECK(stats.total == 3);
+}
+
+TEST_CASE("ref deleter") {
+    using iptr = xmem::unique_ptr<int, test_deleter>;
+    static_assert(sizeof(iptr) == sizeof(int*) + sizeof(test_deleter*));
+    static_assert(std::is_same_v<iptr::pointer, int*>);
+    static_assert(std::is_same_v<iptr::element_type, int>);
+    static_assert(std::is_same_v<iptr::deleter_type, test_deleter>);
+
+    //obj::lifetime_stats stats;
+
+    //{
+    //    optr e;
+    //    e.reset();
+    //    CHECK(e.get_deleter().dels == 0);
+    //}
+
+    //{
+    //    optr o(new obj(44, "x"));
+    //    o.reset();
+    //    CHECK(o.get_deleter().dels == 1);
+
+    //    o.reset(new obj(21, "xy"));
+    //    optr o2(new obj(33, "xyz"));
+    //    o = std::move(o2);
+    //    CHECK(o.get_deleter().dels == 0);
+    //    CHECK(o2.get_deleter().dels == 0);
+
+    //    CHECK(stats.living == 1);
+    //    CHECK(stats.total == 3);
+    //}
+
+    //CHECK(stats.living == 0);
+    //CHECK(stats.total == 3);
 }
