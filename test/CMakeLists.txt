@@ -12,3 +12,4 @@ macro(xmem_test test)
 endmacro()
 
 xmem_test(unique_ptr t-unique_ptr.cpp)
+xmem_test(local_shared_ptr t-local_shared_ptr.cpp)

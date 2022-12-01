@@ -5,7 +5,7 @@
 #include "default_delete.hpp"
 
 #include <cstddef> // nullptr_t, size_t
-#include <utility> // std::forward
+#include <utility> // std::forward, std::swap
 
 namespace xmem {
 
@@ -16,9 +16,7 @@ protected:
     Ptr m_ptr = Ptr();
 
     void swap(uptr_common& other) noexcept {
-        auto p = m_ptr;
-        m_ptr = other.m_ptr;
-        other.m_ptr = p;
+        std::swap(m_ptr, other.m_ptr);
     }
 public:
     uptr_common() noexcept = default;
