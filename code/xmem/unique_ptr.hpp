@@ -36,10 +36,10 @@ public:
     explicit operator bool() const noexcept { return !!m_ptr; }
 
     [[nodiscard]] pointer get() const noexcept { return m_ptr; }
-    decltype(auto) operator*() const noexcept { return *m_ptr; }
+    [[nodiscard]] decltype(auto) operator*() const noexcept { return *m_ptr; }
     pointer operator->() const noexcept { return m_ptr; }
 
-    decltype(auto) operator[](size_t i) const noexcept { return m_ptr[i]; }
+    [[nodiscard]] decltype(auto) operator[](size_t i) const noexcept { return m_ptr[i]; }
 };
 }
 
@@ -103,19 +103,19 @@ public:
 };
 
 template <typename T, typename... Args>
-std::enable_if_t<!std::is_array_v<T>, unique_ptr<T>>
+[[nodiscard]] std::enable_if_t<!std::is_array_v<T>, unique_ptr<T>>
 make_unique(Args&&... args) {
     return unique_ptr<T>{new T(std::forward<Args>(args)...)};
 }
 
 template <typename T>
-auto make_unique_ptr(T&& t) -> unique_ptr<typename std::remove_reference<T>::type> {
+[[nodiscard]] auto make_unique_ptr(T&& t) -> unique_ptr<typename std::remove_reference<T>::type> {
     using RRT = typename std::remove_reference<T>::type;
     return unique_ptr<RRT>(new RRT(std::forward<T>(t)));
 }
 
 template <typename T>
-std::enable_if_t<!std::is_array_v<T>, unique_ptr<T>>
+[[nodiscard]] std::enable_if_t<!std::is_array_v<T>, unique_ptr<T>>
 make_unique_for_overwrite() {
     return unique_ptr<T>(new T);
 }
@@ -275,12 +275,12 @@ public:
 };
 
 template <typename T, typename... Args>
-std::enable_if_t<std::is_array_v<T>, unique_ptr<T>>
+[[nodiscard]] std::enable_if_t<std::is_array_v<T>, unique_ptr<T>>
 make_unique(size_t n) {
     return unique_ptr<T>{new std::remove_extent_t<T>[n]()};
 }
 template <typename T>
-std::enable_if_t<std::is_array_v<T>, unique_ptr<T>>
+[[nodiscard]] std::enable_if_t<std::is_array_v<T>, unique_ptr<T>>
 make_unique_for_overwrite(size_t n) {
     return unique_ptr<T>{new std::remove_extent_t<T>[n]};
 }
@@ -288,16 +288,16 @@ make_unique_for_overwrite(size_t n) {
 
 // compare
 template <typename T1, typename D1, typename T2, typename D2>
-bool operator==(const xmem::unique_ptr<T1, D1>& u1, const xmem::unique_ptr<T2, D2>& u2) { return u1.get() == u2.get(); }
+[[nodiscard]] bool operator==(const xmem::unique_ptr<T1, D1>& u1, const xmem::unique_ptr<T2, D2>& u2) { return u1.get() == u2.get(); }
 template <typename T1, typename D1, typename T2, typename D2>
-bool operator!=(const xmem::unique_ptr<T1, D1>& u1, const xmem::unique_ptr<T2, D2>& u2) { return u1.get() != u2.get(); }
+[[nodiscard]] bool operator!=(const xmem::unique_ptr<T1, D1>& u1, const xmem::unique_ptr<T2, D2>& u2) { return u1.get() != u2.get(); }
 template <typename T1, typename D1, typename T2, typename D2>
-bool operator<(const xmem::unique_ptr<T1, D1>& u1, const xmem::unique_ptr<T2, D2>& u2) { return u1.get() < u2.get(); }
+[[nodiscard]] bool operator<(const xmem::unique_ptr<T1, D1>& u1, const xmem::unique_ptr<T2, D2>& u2) { return u1.get() < u2.get(); }
 template <typename T1, typename D1, typename T2, typename D2>
-bool operator<=(const xmem::unique_ptr<T1, D1>& u1, const xmem::unique_ptr<T2, D2>& u2) { return u1.get() <= u2.get(); }
+[[nodiscard]] bool operator<=(const xmem::unique_ptr<T1, D1>& u1, const xmem::unique_ptr<T2, D2>& u2) { return u1.get() <= u2.get(); }
 template <typename T1, typename D1, typename T2, typename D2>
-bool operator>(const xmem::unique_ptr<T1, D1>& u1, const xmem::unique_ptr<T2, D2>& u2) { return u1.get() > u2.get(); }
+[[nodiscard]] bool operator>(const xmem::unique_ptr<T1, D1>& u1, const xmem::unique_ptr<T2, D2>& u2) { return u1.get() > u2.get(); }
 template <typename T1, typename D1, typename T2, typename D2>
-bool operator>=(const xmem::unique_ptr<T1, D1>& u1, const xmem::unique_ptr<T2, D2>& u2) { return u1.get() >= u2.get(); }
+[[nodiscard]] bool operator>=(const xmem::unique_ptr<T1, D1>& u1, const xmem::unique_ptr<T2, D2>& u2) { return u1.get() >= u2.get(); }
 
 }
