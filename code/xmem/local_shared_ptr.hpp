@@ -3,6 +3,7 @@
 //
 #pragma once
 #include "basic_shared_ptr.hpp"
+#include "basic_weak_ptr.hpp"
 #include "local_control_block.hpp"
 
 namespace xmem {
