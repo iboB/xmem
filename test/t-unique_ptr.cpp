@@ -261,29 +261,52 @@ TEST_CASE("ref deleter") {
     static_assert(std::is_same_v<iptr::element_type, int>);
     static_assert(std::is_same_v<iptr::deleter_type, test_deleter&>);
 
-    //obj::lifetime_stats stats;
+    test_deleter d;
+    {
+        iptr e(d);
+        e.reset();
+        CHECK(&e.get_deleter() == &d);
+    }
+    CHECK(d.dels == 0);
 
-    //{
-    //    optr e;
-    //    e.reset();
-    //    CHECK(e.get_deleter().dels == 0);
-    //}
+    {
+        iptr i(new int(35), d);
+        CHECK(*i == 35);
+        *i = 10;
+        CHECK(*i == 10);
+        auto i2 = std::move(i);
+        CHECK(!i);
+    }
+    CHECK(d.dels == 1);
+}
 
-    //{
-    //    optr o(new obj(44, "x"));
-    //    o.reset();
-    //    CHECK(o.get_deleter().dels == 1);
+TEST_CASE("func deleter") {
+    using func = void(*)(int*);
+    using iptr = xmem::unique_ptr<int, func>;
+    static_assert(sizeof(iptr) == sizeof(int*) + sizeof(func));
+    static_assert(std::is_same_v<iptr::pointer, int*>);
+    static_assert(std::is_same_v<iptr::element_type, int>);
+    static_assert(std::is_same_v<iptr::deleter_type, func>);
 
-    //    o.reset(new obj(21, "xy"));
-    //    optr o2(new obj(33, "xyz"));
-    //    o = std::move(o2);
-    //    CHECK(o.get_deleter().dels == 0);
-    //    CHECK(o2.get_deleter().dels == 0);
+    static int dels = 0;
+    dels = 0;
+    auto deleter = [](int* p) {
+        delete p;
+        ++dels;
+    };
+    {
+        iptr e(deleter);
+        e.reset();
+    }
+    CHECK(dels == 0);
 
-    //    CHECK(stats.living == 1);
-    //    CHECK(stats.total == 3);
-    //}
-
-    //CHECK(stats.living == 0);
-    //CHECK(stats.total == 3);
+    {
+        iptr i(new int(35), deleter);
+        CHECK(*i == 35);
+        *i = 10;
+        CHECK(*i == 10);
+        auto i2 = std::move(i);
+        CHECK(!i);
+    }
+    CHECK(dels == 1);
 }
