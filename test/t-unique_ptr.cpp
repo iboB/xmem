@@ -310,3 +310,55 @@ TEST_CASE("func deleter") {
     }
     CHECK(dels == 1);
 }
+
+TEST_CASE("ar basic") {
+    using arptr = xmem::unique_ptr<int[]>;
+    static_assert(sizeof(arptr) == sizeof(int*));
+    static_assert(std::is_same_v<arptr::pointer, int*>);
+    static_assert(std::is_same_v<arptr::element_type, int>);
+    static_assert(std::is_same_v<arptr::deleter_type, xmem::default_delete<int[]>>);
+
+    {
+        arptr e;
+        CHECK_FALSE(e);
+        CHECK_FALSE(e.get());
+        CHECK_FALSE(e.release());
+        e.reset(); // should be safe
+        e = nullptr;
+        CHECK_FALSE(e);
+    }
+
+    {
+        int i[] = {0, 1, 2, 3, 4, 5};
+        arptr p(i);
+        CHECK(p);
+        CHECK(p.get() == i);
+        CHECK(p[3] == 3);
+        p[3] = 50;
+        CHECK(p[3] == 50);
+        CHECK(p[2] == 2);
+        CHECK(p[5] == 5);
+        CHECK(p.release() == i);
+        CHECK_FALSE(p.release());
+        p = nullptr;
+        CHECK_FALSE(p);
+    }
+
+    {
+        auto p = xmem::make_unique<int[]>(10);
+        CHECK(p);
+        CHECK(p[0] == 0);
+        CHECK(p[9] == 0);
+        p.reset();
+        CHECK_FALSE(p);
+
+        p = xmem::make_unique_for_overwrite<int[]>(6);
+        CHECK(p);
+
+        auto pp = p.get();
+
+        p.reset(new int[33]);
+
+        CHECK(p.get() != pp);
+    }
+}

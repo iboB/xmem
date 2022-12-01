@@ -262,7 +262,7 @@ public:
         auto old = this->m_ptr;
         this->m_ptr = p;
         if (old) {
-            m_deleter(old);
+            D::operator()(old);
         }
     }
 
