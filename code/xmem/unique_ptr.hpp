@@ -182,9 +182,9 @@ public:
     using deleter_type = void(*)(B*);
 
     unique_ptr(pointer p, deleter_type d) noexcept : common(p), m_deleter(d) {}
-    unique_ptr(pointer, nullptr_t) = delete;
+    unique_ptr(pointer, std::nullptr_t) = delete;
     explicit unique_ptr(deleter_type d) noexcept : common(nullptr), m_deleter(d) {}
-    explicit unique_ptr(nullptr_t) = delete;
+    explicit unique_ptr(std::nullptr_t) = delete;
     ~unique_ptr() {
         if (this->m_ptr) {
             m_deleter(this->m_ptr);
