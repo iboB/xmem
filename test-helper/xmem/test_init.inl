@@ -4,8 +4,11 @@
 
 // inline file - no include guard
 
+#include <doctest/util/lifetime_counter.hpp>
+
 #include <cstdint>
 #include <string>
+#include <vector>
 
 struct obj : public doctest::util::lifetime_counter<obj> {
     int a = 11;
@@ -35,3 +38,24 @@ struct cnt_deleter {
         delete optr;
     }
 };
+
+#if !defined(XMEM_TEST_NAMESPACE)
+#   error "XMEM_TEST_NAMESPACE is not defined"
+#endif
+namespace XMEM_TEST_NAMESPACE {}
+namespace test = XMEM_TEST_NAMESPACE;
+
+#if !defined(ENABLE_XMEM_SPECIFIC_CHECKS)
+#   error "ENABLE_XMEM_SPECIFIC_CHECKS is not defined"
+#endif
+#if ENABLE_XMEM_SPECIFIC_CHECKS
+#   define XMEM(...) __VA_ARGS__
+#   define STD20(...) __VA_ARGS__
+#else
+#   define XMEM(...)
+#if __cplusplus >= 202000
+#   define STD20(...) __VA_ARGS__
+#else
+#   define STD20(...)
+#endif
+#endif

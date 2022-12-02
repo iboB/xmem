@@ -1,12 +1,12 @@
 // Copyright (c) Borislav Stanimirov
 // SPDX-License-Identifier: MIT
 //
-#define XMEM_TEST_NAMESPACE xmem
-#define ENABLE_XMEM_SPECIFIC_CHECKS 1
+#define XMEM_TEST_NAMESPACE std
+#define ENABLE_XMEM_SPECIFIC_CHECKS 0
 #include <xmem/test_init.inl>
 
-#include <xmem/unique_ptr.hpp>
+#include <memory>
 #include <doctest/doctest.h>
-TEST_SUITE_BEGIN("unique_ptr");
+TEST_SUITE_BEGIN("sanity std::unique_ptr");
 
 #include <xmem/test-unique_ptr.inl>

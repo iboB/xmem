@@ -4,10 +4,9 @@
 #include <doctest/doctest.h>
 
 #include <xmem/local_shared_ptr.hpp>
-#include <doctest/util/lifetime_counter.hpp>
 
-#include <vector>
-
+#define XMEM_TEST_NAMESPACE xmem
+#define ENABLE_XMEM_SPECIFIC_CHECKS 1
 #include <xmem/test_init.inl>
 
 TEST_SUITE_BEGIN("local_shared_ptr");
