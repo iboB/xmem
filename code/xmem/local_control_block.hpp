@@ -22,6 +22,11 @@ public:
             dec_weak_ref();
         }
     }
+    uint32_t int_strong_ref_nz() noexcept {
+        if (!m_strong_refs) return 0;
+        return ++m_strong_refs;
+    }
+
     void inc_weak_ref() noexcept { ++m_weak_refs; }
     void dec_weak_ref() noexcept {
         if (--m_weak_refs == 0) {

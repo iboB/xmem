@@ -103,10 +103,14 @@ public:
     }
 
     [[nodiscard]] basic_shared_ptr<T, CBT> lock() const noexcept {
-        //basic_shared_ptr<T, CBT> ret;
-        //if ()
-        //ret.m_ptr =
-        //ret.m_cb = m_cb;
+        if (!m_cb) return {};
+
+        basic_shared_ptr<T, CBT> ret;
+        if (!m_cb->inc_strong_ref_nz()) return {};
+
+        ret.m_ptr = m_ptr;
+        ret.m_cb = m_cb;
+        return ret;
     }
 
 private:
