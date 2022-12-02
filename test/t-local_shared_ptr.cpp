@@ -109,3 +109,44 @@ TEST_CASE("basic") {
         CHECK(stats.total == 4);
     }
 }
+
+TEST_CASE("basic compare/swap") {
+    int vals[] = {1, 2};
+
+    using uiptr = xmem::unique_ptr<int, void(*)(int*)>;
+    uiptr up0(vals + 0, [](int*) {});
+    uiptr up1(vals + 1, [](int*) {});
+
+    using siptr = xmem::local_shared_ptr<int>;
+    siptr p0(std::move(up0));
+    CHECK(p0 == p0);
+    CHECK_FALSE(p0 != p0);
+    CHECK_FALSE(p0 < p0);
+    CHECK_FALSE(p0 > p0);
+    CHECK(p0 >= p0);
+    CHECK(p0 <= p0);
+
+    siptr p0a = p0;
+    siptr p1(std::move(up1));
+
+    CHECK(p0 == p0a);
+    CHECK(p1 == p1);
+    CHECK_FALSE(p0 == p1);
+    CHECK(p0 != p1);
+    CHECK_FALSE(p0 != p0a);
+    CHECK(p0 < p1);
+    CHECK_FALSE(p1 < p0);
+    CHECK(p0 <= p1);
+    CHECK(p0 <= p0a);
+    CHECK_FALSE(p1 <= p0);
+    CHECK(p1 > p0);
+    CHECK_FALSE(p0 > p1);
+    CHECK(p1 >= p0);
+    CHECK(p0a >= p0);
+    CHECK_FALSE(p0 >= p1);
+
+    p1.swap(p0);
+    CHECK(p0.get() == vals + 1);
+    CHECK(p1.get() == vals + 0);
+    CHECK(p1 < p0);
+}

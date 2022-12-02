@@ -202,4 +202,18 @@ private:
     template <typename, typename> friend class basic_weak_pt;
 };
 
+// compare
+template <typename CBT1, typename T1, typename CBT2, typename T2>
+[[nodiscard]] bool operator==(const xmem::basic_shared_ptr<CBT1, T1>& s1, const xmem::basic_shared_ptr<CBT2, T2>& s2) { return s1.get() == s2.get(); }
+template <typename CBT1, typename T1, typename CBT2, typename T2>
+[[nodiscard]] bool operator!=(const xmem::basic_shared_ptr<CBT1, T1>& s1, const xmem::basic_shared_ptr<CBT2, T2>& s2) { return s1.get() != s2.get(); }
+template <typename CBT1, typename T1, typename CBT2, typename T2>
+[[nodiscard]] bool operator<(const xmem::basic_shared_ptr<CBT1, T1>& s1, const xmem::basic_shared_ptr<CBT2, T2>& s2) { return s1.get() < s2.get(); }
+template <typename CBT1, typename T1, typename CBT2, typename T2>
+[[nodiscard]] bool operator<=(const xmem::basic_shared_ptr<CBT1, T1>& s1, const xmem::basic_shared_ptr<CBT2, T2>& s2) { return s1.get() <= s2.get(); }
+template <typename CBT1, typename T1, typename CBT2, typename T2>
+[[nodiscard]] bool operator>(const xmem::basic_shared_ptr<CBT1, T1>& s1, const xmem::basic_shared_ptr<CBT2, T2>& s2) { return s1.get() > s2.get(); }
+template <typename CBT1, typename T1, typename CBT2, typename T2>
+[[nodiscard]] bool operator>=(const xmem::basic_shared_ptr<CBT1, T1>& s1, const xmem::basic_shared_ptr<CBT2, T2>& s2) { return s1.get() >= s2.get(); }
+
 } // namespace xmem
