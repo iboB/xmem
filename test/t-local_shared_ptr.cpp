@@ -138,3 +138,20 @@ TEST_CASE("basic compare/swap") {
     CHECK(p1.get() == vals + 0);
     CHECK(p1 < p0);
 }
+
+TEST_CASE("make shared") {
+    obj::lifetime_stats stats;
+
+    {
+        //auto sptr = xmem::make_local_shared<
+    }
+}
+
+
+TEST_CASE("cast and type erasure") {
+    using sptr = xmem::local_shared_ptr<obj>;
+
+    {
+
+    }
+}

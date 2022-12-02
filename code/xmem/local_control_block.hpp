@@ -4,6 +4,8 @@
 #pragma once
 #include "unique_ptr.hpp"
 
+#include <new>
+
 namespace xmem {
 
 class local_control_block_base {
@@ -50,11 +52,33 @@ public:
     virtual void destroy_self() noexcept override { delete this; }
 };
 
+template <typename T, typename Alloc>
+class local_control_block_resource final : public local_control_block_base, private /*EBO*/ Alloc {
+    union {
+        T m_obj;
+    };
+public:
+    template <typename... Args>
+    local_control_block_resource(Alloc a, Args&&... args) : Alloc(std::move(a)) {
+        new (&m_obj) T(std::forward<Args>(args)...);
+    }
+
+    virtual void destroy_resource() noexcept override { m_obj.~T(); }
+    virtual void destroy_self() noexcept override {
+        Alloc myalloc = *this; // slice
+        this->~local_control_block_base();
+        myalloc.deallocate(this);
+    }
+};
+
 struct local_control_block {
     using base_type = local_control_block_base;
 
     template <typename T, typename D>
     using uptr_type = local_control_block_uptr<T, D>;
+
+    template <typename T, typename A>
+    using rsrc_type = local_control_block_resource<T, A>;
 };
 
 }

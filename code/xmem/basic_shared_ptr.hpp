@@ -184,6 +184,9 @@ public:
         return m.cb < r.m.cb;
     }
 
+    template <typename UCBT, typename U, typename... Args>
+    friend basic_shared_ptr<UCBT, U> make_basic_shared(Args&&... args);
+
 private:
     template <typename U>
     void init_from_copy(const basic_shared_ptr<CBT, U>& r) {
