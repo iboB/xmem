@@ -14,28 +14,43 @@ public:
 
     basic_weak_ptr() noexcept : m(nullptr) {}
 
-    template <typename U>
-    basic_weak_ptr(const basic_weak_ptr<CBT, U>& r) noexcept
-        : m(r.m)
-    {
-        if (m.cb) m.cb->inc_weak_ref();
+    basic_weak_ptr(const basic_weak_ptr& r) noexcept {
+        init_from_copy(r);
     }
-    template <typename U>
-    basic_weak_ptr& operator=(const basic_weak_ptr<CBT, U>& r) noexcept {
+    basic_weak_ptr& operator=(const basic_weak_ptr& r) noexcept {
         if (m.cb) m.cb->dec_weak_ref();
-        m = r.m;
-        if (m.cb) m.cb->inc_weak_ref();
+        init_from_copy(r);
         return *this;
     }
 
     template <typename U>
-    basic_weak_ptr(basic_weak_ptr<CBT, U>&& r) noexcept
-        : m(std::move(r.m))
-    {}
+    basic_weak_ptr(const basic_weak_ptr<CBT, U>& r) noexcept {
+        init_from_copy(r);
+    }
+    template <typename U>
+    basic_weak_ptr& operator=(const basic_weak_ptr<CBT, U>& r) noexcept {
+        if (m.cb) m.cb->dec_weak_ref();
+        init_from_copy(r);
+        return *this;
+    }
+
+    basic_weak_ptr(basic_weak_ptr&& r) noexcept {
+        init_from_move(r);
+    }
+    basic_weak_ptr& operator=(basic_weak_ptr&& r) noexcept {
+        if (m.cb) m.cb->dec_weak_ref();
+        init_from_move(r);
+        return *this;
+    }
+
+    template <typename U>
+    basic_weak_ptr(basic_weak_ptr<CBT, U>&& r) noexcept {
+        init_from_move(r);
+    }
     template <typename U>
     basic_weak_ptr& operator=(basic_weak_ptr<CBT, U>&& r) noexcept {
         if (m.cb) m.cb->dec_weak_ref();
-        m = std::move(r.m);
+        init_from_move(r);
         return *this;
     }
 
@@ -102,6 +117,17 @@ public:
     }
 
 private:
+    template <typename U>
+    void init_from_copy(const basic_weak_ptr<CBT, U>& r) {
+        m = r.m;
+        if (m.cb) m.cb->inc_weak_ref();
+    }
+
+    template <typename U>
+    void init_from_move(basic_weak_ptr<CBT, U>& r) {
+        m = std::move(r.m);
+    }
+
     impl::cb_ptr_pair<control_block_type, element_type> m;
 };
 

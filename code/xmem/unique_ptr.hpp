@@ -82,6 +82,12 @@ public:
 
     template <typename U, typename D2>
     unique_ptr(unique_ptr<U, D2>&& other) noexcept : common(other.release()), D(std::move(other.get_deleter())) {}
+    template <typename U, typename D2>
+    unique_ptr& operator=(unique_ptr<U, D2>&& other) noexcept {
+        reset(other.release());
+        get_deleter() = std::move(other.get_deleter());
+        return *this;
+    }
 
     void reset(pointer p = pointer()) noexcept {
         auto old = this->m_ptr;
@@ -151,6 +157,12 @@ public:
 
     template <typename U, typename D2>
     unique_ptr(unique_ptr<U, D2>&& other) noexcept : common(other.release()), m_deleter(&other.get_deleter()) {}
+    template <typename U, typename D2>
+    unique_ptr& operator=(unique_ptr<U, D2>&& other) noexcept {
+        reset(other.release());
+        m_deleter = &other.get_deleter();
+        return *this;
+    }
 
     void reset(pointer p = pointer()) noexcept {
         auto old = this->m_ptr;
@@ -205,6 +217,12 @@ public:
 
     template <typename U>
     unique_ptr(unique_ptr<U, deleter_type>&& other) noexcept : common(other.release()), m_deleter(other.get_deleter()) {}
+    template <typename U, typename D2>
+    unique_ptr& operator=(unique_ptr<U, D2>&& other) noexcept {
+        reset(other.release());
+        m_deleter = other.get_deleter();
+        return *this;
+    }
 
     void reset(pointer p = pointer()) noexcept {
         auto old = this->m_ptr;

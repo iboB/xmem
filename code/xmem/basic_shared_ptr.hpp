@@ -78,29 +78,43 @@ public:
     basic_shared_ptr() noexcept : m(nullptr) {}
     basic_shared_ptr(std::nullptr_t) noexcept : basic_shared_ptr() {};
 
-    template <typename U>
-    basic_shared_ptr(const basic_shared_ptr<CBT, U>& r) noexcept
-        : m(r.m)
-    {
-        if (m.cb) m.cb->inc_strong_ref();
+    basic_shared_ptr(const basic_shared_ptr& r) noexcept {
+        init_from_copy(r);
     }
-    template <typename U>
-    basic_shared_ptr& operator=(const basic_shared_ptr<CBT, U>& r) noexcept {
+    basic_shared_ptr& operator=(const basic_shared_ptr& r) noexcept {
         if (m.cb) m.cb->dec_strong_ref();
-        m = r.m;
-        if (m.cb) m.cb->inc_strong_ref();
+        init_from_copy(r);
         return *this;
     }
 
     template <typename U>
-    basic_shared_ptr(basic_shared_ptr<CBT, U>&& r) noexcept
-        : m(std::move(r.m))
-    {}
+    basic_shared_ptr(const basic_shared_ptr<CBT, U>& r) noexcept {
+        init_from_copy(r);
+    }
+    template <typename U>
+    basic_shared_ptr& operator=(const basic_shared_ptr<CBT, U>& r) noexcept {
+        if (m.cb) m.cb->dec_strong_ref();
+        init_from_copy(r);
+        return *this;
+    }
 
+    basic_shared_ptr(basic_shared_ptr&& r) noexcept {
+        init_from_move(r);
+    }
+    basic_shared_ptr& operator=(basic_shared_ptr&& r) noexcept {
+        if (m.cb) m.cb->dec_strong_ref();
+        init_from_move(r);
+        return *this;
+    }
+
+    template <typename U>
+    basic_shared_ptr(basic_shared_ptr<CBT, U>&& r) noexcept {
+        init_from_move(r);
+    }
     template <typename U>
     basic_shared_ptr& operator=(basic_shared_ptr<CBT, U>&& r) noexcept {
         if (m.cb) m.cb->dec_strong_ref();
-        m = std::move(r.m);
+        init_from_move(r);
         return *this;
     }
 
@@ -171,6 +185,17 @@ public:
     }
 
 private:
+    template <typename U>
+    void init_from_copy(const basic_shared_ptr<CBT, U>& r) {
+        m = r.m;
+        if (m.cb) m.cb->inc_strong_ref();
+    }
+
+    template <typename U>
+    void init_from_move(basic_shared_ptr<CBT, U>& r) {
+        m = std::move(r.m);
+    }
+
     impl::cb_ptr_pair<control_block_type, element_type> m;
 
     template <typename, typename> friend class basic_shared_ptr;
