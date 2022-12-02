@@ -27,6 +27,10 @@ add_library(xmem INTERFACE)
 add_library(xmem::xmem ALIAS xmem)
 target_include_directories(xmem INTERFACE code)
 
+add_library(xmem-test-helper INTERFACE)
+add_library(xmem::test-helper ALIAS xmem-test-helper)
+target_include_directories(xmem-test-helper INTERFACE test-helper)
+
 if(XMEM_BUILD_TESTS)
     enable_testing()
     add_subdirectory(test)

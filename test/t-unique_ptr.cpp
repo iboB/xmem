@@ -8,41 +8,9 @@
 
 #include <vector>
 
+#include <xmem/test_init.inl>
+
 TEST_SUITE_BEGIN("unique_ptr");
-
-struct obj : public doctest::util::lifetime_counter<obj> {
-    obj() = default;
-    obj(int a, std::string b) : a(a), b(b) {}
-
-    int a = 11;
-    std::string b;
-};
-
-struct parent : public doctest::util::lifetime_counter<parent> {
-    int a;
-    explicit parent(int a = 0) : a(a) {}
-    virtual ~parent() = default;
-    virtual int val() const { return a; }
-};
-
-struct child : parent {
-    int b;
-    child(int a, int b) : parent(a), b(b) {}
-    virtual int val() const override { return a + b; }
-};
-
-struct test_deleter {
-    intptr_t dels = 0;
-    void operator()(int* iptr) {
-        ++dels;
-        delete iptr;
-    }
-    void operator()(obj* optr) {
-        ++dels;
-        delete optr;
-    }
-
-};
 
 TEST_CASE("basic") {
     using iptr = xmem::unique_ptr<int>;
@@ -165,11 +133,11 @@ TEST_CASE("make_unique") {
 }
 
 TEST_CASE("template move") {
-    parent::lifetime_stats stats;
+    obj::lifetime_stats stats;
 
     {
         auto c = xmem::make_unique<child>(1, 2);
-        xmem::unique_ptr<parent> p = std::move(c);
+        xmem::unique_ptr<obj> p = std::move(c);
         CHECK_FALSE(c);
         CHECK(p);
         CHECK(p->a == 1);
@@ -180,7 +148,7 @@ TEST_CASE("template move") {
     CHECK(stats.total == 1);
 
     {
-        auto p = xmem::make_unique<parent>(5);
+        auto p = xmem::make_unique<obj>(5);
         auto c = xmem::make_unique<child>(10, 20);
         p = std::move(c);
         CHECK(p->val() == 30);
@@ -228,11 +196,11 @@ TEST_CASE("make_unique_ptr") {
 }
 
 TEST_CASE("deleter") {
-    using optr = xmem::unique_ptr<obj, test_deleter>;
+    using optr = xmem::unique_ptr<obj, cnt_deleter>;
     static_assert(sizeof(optr) == sizeof(obj*) + sizeof(intptr_t));
     static_assert(std::is_same_v<optr::pointer, obj*>);
     static_assert(std::is_same_v<optr::element_type, obj>);
-    static_assert(std::is_same_v<optr::deleter_type, test_deleter>);
+    static_assert(std::is_same_v<optr::deleter_type, cnt_deleter>);
 
     obj::lifetime_stats stats;
 
@@ -262,13 +230,13 @@ TEST_CASE("deleter") {
 }
 
 TEST_CASE("ref deleter") {
-    using iptr = xmem::unique_ptr<int, test_deleter&>;
-    static_assert(sizeof(iptr) == sizeof(int*) + sizeof(test_deleter*));
+    using iptr = xmem::unique_ptr<int, cnt_deleter&>;
+    static_assert(sizeof(iptr) == sizeof(int*) + sizeof(cnt_deleter*));
     static_assert(std::is_same_v<iptr::pointer, int*>);
     static_assert(std::is_same_v<iptr::element_type, int>);
-    static_assert(std::is_same_v<iptr::deleter_type, test_deleter&>);
+    static_assert(std::is_same_v<iptr::deleter_type, cnt_deleter&>);
 
-    test_deleter d;
+    cnt_deleter d;
     {
         iptr e(d);
         e.reset();

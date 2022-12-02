@@ -8,20 +8,9 @@
 
 #include <vector>
 
+#include <xmem/test_init.inl>
+
 TEST_SUITE_BEGIN("local_shared_ptr");
-
-struct obj : public doctest::util::lifetime_counter<obj> {
-    int a;
-    explicit obj(int a = 0) : a(a) {}
-    virtual ~obj() = default;
-    virtual int val() const { return a; }
-};
-
-struct child : obj {
-    int b;
-    child(int a, int b) : obj(a), b(b) {}
-    virtual int val() const override { return a + b; }
-};
 
 TEST_CASE("basic") {
     using sptr = xmem::local_shared_ptr<obj>;
