@@ -12,7 +12,10 @@ template <typename CB, typename T>
 struct cb_ptr_pair {
     cb_ptr_pair() noexcept = default;
 
-    cb_ptr_pair(std::nullptr_t) : cb(nullptr), ptr(nullptr) {}
+    explicit cb_ptr_pair(std::nullptr_t) : cb(nullptr), ptr(nullptr) {}
+
+    cb_ptr_pair(const cb_ptr_pair&) noexcept = default;
+    cb_ptr_pair& operator=(const cb_ptr_pair&) noexcept = default;
 
     template <typename U>
     cb_ptr_pair(const cb_ptr_pair<CB, U>& r) noexcept
@@ -23,6 +26,17 @@ struct cb_ptr_pair {
     cb_ptr_pair& operator=(const cb_ptr_pair<CB, U>& r) noexcept {
         cb = r.cb;
         ptr = r.ptr;
+        return *this;
+    }
+
+    cb_ptr_pair(cb_ptr_pair&& r) noexcept : cb(r.cb), ptr(r.ptr) {
+        r.reset();
+    }
+    cb_ptr_pair& operator=(cb_ptr_pair&& r) noexcept {
+        cb = r.cb;
+        ptr = r.ptr;
+        r.reset();
+        return *this;
     }
 
     template <typename U>
@@ -34,6 +48,7 @@ struct cb_ptr_pair {
         cb = r.cb;
         ptr = r.ptr;
         r.reset();
+        return *this;
     }
 
     void reset() {
@@ -79,7 +94,7 @@ public:
 
     template <typename U>
     basic_shared_ptr(basic_shared_ptr<U, CBT>&& r) noexcept
-        : m(std::move(r))
+        : m(std::move(r.m))
     {}
 
     template <typename U>

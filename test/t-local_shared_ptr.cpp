@@ -32,6 +32,7 @@ TEST_CASE("basic") {
         sptr e;
         CHECK_FALSE(e);
         CHECK_FALSE(e.get());
+        CHECK(e.use_count() == 0);
         e.reset(); // should be safe
         e = nullptr;
         CHECK_FALSE(e);
@@ -40,13 +41,28 @@ TEST_CASE("basic") {
     CHECK(stats.total == 0);
 
     {
-        sptr e(new obj(44));
-        CHECK(e);
-        CHECK(e.get());
-        CHECK(e.get()->a == 44);
-        CHECK(e->a == 44);
+        sptr o(new obj(44));
+        CHECK(o);
+        CHECK(o.use_count() == 1);
+        CHECK(o.get());
+        CHECK(o.get()->a == 44);
+        CHECK(o->a == 44);
     }
 
     CHECK(stats.total == 1);
     CHECK(stats.living == 0);
+
+    {
+        sptr o(new obj(11));
+        auto p = o.get();
+        sptr mo = std::move(o);
+        CHECK(!o);
+        CHECK(o.get() == 0);
+        CHECK(o.use_count() == 0);
+        CHECK(mo);
+        CHECK(mo.get() == p);
+        CHECK(mo.use_count() == 1);
+
+        CHECK(stats.living == 1);
+    }
 }
