@@ -99,11 +99,18 @@ TEST_CASE("basic") {
     }
 }
 
-TEST_CASE("compare / swap") {
+TEST_CASE("compare/swap") {
     int vals[] = {1, 2};
 
     using iptr = xmem::unique_ptr<int>;
     iptr p0(vals + 0);
+    CHECK(p0 == p0);
+    CHECK_FALSE(p0 != p0);
+    CHECK_FALSE(p0 < p0);
+    CHECK_FALSE(p0 > p0);
+    CHECK(p0 >= p0);
+    CHECK(p0 <= p0);
+
     iptr p0a(vals + 0);
     iptr p1(vals + 1);
 

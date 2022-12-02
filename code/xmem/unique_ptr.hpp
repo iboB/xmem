@@ -306,16 +306,16 @@ make_unique_for_overwrite(size_t n) {
 
 // compare
 template <typename T1, typename D1, typename T2, typename D2>
-[[nodiscard]] bool operator==(const xmem::unique_ptr<T1, D1>& u1, const xmem::unique_ptr<T2, D2>& u2) { return u1.get() == u2.get(); }
+[[nodiscard]] bool operator==(const unique_ptr<T1, D1>& u1, const unique_ptr<T2, D2>& u2) { return u1.get() == u2.get(); }
 template <typename T1, typename D1, typename T2, typename D2>
-[[nodiscard]] bool operator!=(const xmem::unique_ptr<T1, D1>& u1, const xmem::unique_ptr<T2, D2>& u2) { return u1.get() != u2.get(); }
+[[nodiscard]] bool operator!=(const unique_ptr<T1, D1>& u1, const unique_ptr<T2, D2>& u2) { return u1.get() != u2.get(); }
 template <typename T1, typename D1, typename T2, typename D2>
-[[nodiscard]] bool operator<(const xmem::unique_ptr<T1, D1>& u1, const xmem::unique_ptr<T2, D2>& u2) { return u1.get() < u2.get(); }
+[[nodiscard]] bool operator<(const unique_ptr<T1, D1>& u1, const unique_ptr<T2, D2>& u2) { return u1.get() < u2.get(); }
 template <typename T1, typename D1, typename T2, typename D2>
-[[nodiscard]] bool operator<=(const xmem::unique_ptr<T1, D1>& u1, const xmem::unique_ptr<T2, D2>& u2) { return u1.get() <= u2.get(); }
+[[nodiscard]] bool operator<=(const unique_ptr<T1, D1>& u1, const unique_ptr<T2, D2>& u2) { return u1.get() <= u2.get(); }
 template <typename T1, typename D1, typename T2, typename D2>
-[[nodiscard]] bool operator>(const xmem::unique_ptr<T1, D1>& u1, const xmem::unique_ptr<T2, D2>& u2) { return u1.get() > u2.get(); }
+[[nodiscard]] bool operator>(const unique_ptr<T1, D1>& u1, const unique_ptr<T2, D2>& u2) { return u1.get() > u2.get(); }
 template <typename T1, typename D1, typename T2, typename D2>
-[[nodiscard]] bool operator>=(const xmem::unique_ptr<T1, D1>& u1, const xmem::unique_ptr<T2, D2>& u2) { return u1.get() >= u2.get(); }
+[[nodiscard]] bool operator>=(const unique_ptr<T1, D1>& u1, const unique_ptr<T2, D2>& u2) { return u1.get() >= u2.get(); }
 
-}
+} // namespace xmem
