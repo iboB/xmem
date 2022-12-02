@@ -1,7 +1,3 @@
-// Copyright (c) Borislav Stanimirov
-// SPDX-License-Identifier: MIT
-//
-
 // demo from https://en.cppreference.com/w/cpp/memory/unique_ptr
 
 #include <xmem/unique_ptr.hpp>
