@@ -12,11 +12,12 @@ public:
     using element_type = std::remove_extent_t<T>;
     using control_block_type = typename CBT::base_type;
 
-    basic_weak_ptr() noexcept : m_cb(nullptr) {}
+    basic_weak_ptr() noexcept : m_cb(nullptr), m_ptr(nullptr) {}
 
     template <typename U>
     basic_weak_ptr(const basic_weak_ptr<U, CBT>& other) noexcept
         : m_cb(other.m_cb)
+        , m_ptr(other.m_ptr)
     {
         if (m_cb) m_cb->inc_weak_ref();
     }
@@ -24,6 +25,7 @@ public:
     basic_weak_ptr& operator=(const basic_weak_ptr<U, CBT>& other) noexcept {
         if (m_cb) m_cb->dec_weak_ref();
         m_cb = other.m_cb;
+        m_ptr = other.m_ptr;
         if (m_cb) m_cb->inc_weak_ref();
         return *this;
     }
@@ -31,20 +33,25 @@ public:
     template <typename U>
     basic_weak_ptr(basic_weak_ptr<U, CBT>&& other) noexcept
         : m_cb(other.m_cb)
+        , m_ptr(other.m_ptr)
     {
         other.m_cb = nullptr;
+        other.m_ptr = nullptr;
     }
     template <typename U>
     basic_weak_ptr& operator=(basic_weak_ptr<U, CBT>&& other) noexcept {
         if (m_cb) m_cb->dec_weak_ref();
         m_cb = other.m_cb;
+        m_ptr = other.m_ptr;
         other.m_cb = nullptr;
+        other.m_ptr = nullptr;
         return *this;
     }
 
     template <typename U>
     basic_weak_ptr(const basic_shared_ptr<U, CBT>& sptr) noexcept
         : m_cb(impl::owner_cast<control_block_type>(sptr.owner()))
+        , m_ptr(sptr.get())
     {
         if (m_cb) m_cb->inc_weak_ref();
     }
@@ -52,6 +59,7 @@ public:
     basic_weak_ptr& operator=(const basic_shared_ptr<U, CBT>& sptr) noexcept {
         if (m_cb) m_cb->dec_weak_ref();
         m_cb = impl::owner_cast<control_block_type>(sptr.owner());
+        m_ptr = sptr.get();
         if (m_cb) m_cb->inc_weak_ref();
         return *this;
     }
@@ -63,10 +71,12 @@ public:
     void reset() noexcept {
         if (m_cb) m_cb->dec_weak_ref();
         m_cb = nullptr;
+        m_ptr = nullptr;
     }
 
     void swap(basic_weak_ptr& other) noexcept {
         std::swap(m_cb, other.m_cb);
+        std::swap(m_ptr, other.m_ptr);
     }
 
     [[nodiscard]] long use_count() const noexcept {
@@ -93,11 +103,15 @@ public:
     }
 
     [[nodiscard]] basic_shared_ptr<T, CBT> lock() const noexcept {
-
+        //basic_shared_ptr<T, CBT> ret;
+        //if ()
+        //ret.m_ptr =
+        //ret.m_cb = m_cb;
     }
 
 private:
     control_block_type* m_cb;
+    element_type* m_ptr;
 };
 
 }
