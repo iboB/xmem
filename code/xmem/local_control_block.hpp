@@ -5,6 +5,7 @@
 #include "cb_ptr_pair.hpp"
 #include "unique_ptr.hpp"
 #include "allocator_rebind.hpp"
+#include "allocator.hpp"
 
 #include <new>
 
@@ -82,6 +83,9 @@ public:
     }
 };
 
+template <typename T>
+using local_control_block_resource_dalloc = local_control_block_resource<T, allocator<char>>;
+
 struct local_control_block {
     using cb_type = local_control_block_base;
 
@@ -91,8 +95,14 @@ struct local_control_block {
         return {cb, cb->ptr()};
     }
 
-    template <typename T, typename A>
-    using rsrc_type = local_control_block_resource<T, A>;
+    template <typename T, typename... Args>
+    static cb_ptr_pair<cb_type, T> make_resource_cb(Args&&... args) {
+        using rcb_type = local_control_block_resource_dalloc<T>;
+        allocator<rcb_type> alloc;
+        auto cb = alloc.allocate(1);
+        new (cb) rcb_type(std::forward<Args>(args)...);
+        return {cb, cb->ptr()};
+    }
 };
 
 }

@@ -10,12 +10,12 @@ namespace xmem {
 template <typename T>
 class allocator {
     [[nodiscard]] T* allocate(size_t n) {
-        auto ret = ::operator new(std::align_val_t{alignof(T)}) char[n * sizeof(T)];
+        auto ret = ::operator new(n * sizeof(T), std::align_val_t{alignof(T)});
         return reinterpret_cast<T*>(ret);
     }
     void deallocate(T* ptr, size_t) {
-        auto del = reinterpret_cast<char*>(ptr);
-        delete[] del;
+        auto del = reinterpret_cast<void*>(ptr);
+        delete del;
     }
 };
 
