@@ -6,11 +6,11 @@
 
 namespace xmem {
 
-template <typename CBT, typename T>
+template <typename CBF, typename T>
 class basic_weak_ptr {
 public:
     using element_type = std::remove_extent_t<T>;
-    using control_block_type = typename CBT::cb_type;
+    using control_block_type = typename CBF::cb_type;
 
     basic_weak_ptr() noexcept : m(nullptr) {}
 
@@ -24,11 +24,11 @@ public:
     }
 
     template <typename U>
-    basic_weak_ptr(const basic_weak_ptr<CBT, U>& r) noexcept {
+    basic_weak_ptr(const basic_weak_ptr<CBF, U>& r) noexcept {
         init_from_copy(r);
     }
     template <typename U>
-    basic_weak_ptr& operator=(const basic_weak_ptr<CBT, U>& r) noexcept {
+    basic_weak_ptr& operator=(const basic_weak_ptr<CBF, U>& r) noexcept {
         if (m.cb) m.cb->dec_weak_ref();
         init_from_copy(r);
         return *this;
@@ -44,24 +44,24 @@ public:
     }
 
     template <typename U>
-    basic_weak_ptr(basic_weak_ptr<CBT, U>&& r) noexcept {
+    basic_weak_ptr(basic_weak_ptr<CBF, U>&& r) noexcept {
         init_from_move(r);
     }
     template <typename U>
-    basic_weak_ptr& operator=(basic_weak_ptr<CBT, U>&& r) noexcept {
+    basic_weak_ptr& operator=(basic_weak_ptr<CBF, U>&& r) noexcept {
         if (m.cb) m.cb->dec_weak_ref();
         init_from_move(r);
         return *this;
     }
 
     template <typename U>
-    basic_weak_ptr(const basic_shared_ptr<CBT, U>& sptr) noexcept
+    basic_weak_ptr(const basic_shared_ptr<CBF, U>& sptr) noexcept
         : m(sptr.m)
     {
         if (m.cb) m.cb->inc_weak_ref();
     }
     template <typename U>
-    basic_weak_ptr& operator=(const basic_shared_ptr<CBT, U>& sptr) noexcept {
+    basic_weak_ptr& operator=(const basic_shared_ptr<CBF, U>& sptr) noexcept {
         if (m.cb) m.cb->dec_weak_ref();
         m = sptr.m;
         if (m.cb) m.cb->inc_weak_ref();
@@ -96,20 +96,20 @@ public:
 
     [[nodiscard]] const void* owner() const noexcept { return m.cb; }
 
-    template <typename UCBT, typename U>
-    [[nodiscard]] bool owner_before(const basic_weak_ptr<UCBT, U>& r) const noexcept {
+    template <typename UCBF, typename U>
+    [[nodiscard]] bool owner_before(const basic_weak_ptr<UCBF, U>& r) const noexcept {
         return m.cb < r.m.cb;
     }
 
-    template <typename UCBT, typename U>
-    [[nodiscard]] bool owner_before(const basic_shared_ptr<UCBT, U>& r) const noexcept {
+    template <typename UCBF, typename U>
+    [[nodiscard]] bool owner_before(const basic_shared_ptr<UCBF, U>& r) const noexcept {
         return m.cb < r.m.cb;
     }
 
-    [[nodiscard]] basic_shared_ptr<CBT, T> lock() const noexcept {
+    [[nodiscard]] basic_shared_ptr<CBF, T> lock() const noexcept {
         if (!m.cb) return {};
 
-        basic_shared_ptr<CBT, T> ret;
+        basic_shared_ptr<CBF, T> ret;
         if (!m.cb->inc_strong_ref_nz()) return {};
 
         ret.m = m;
@@ -118,13 +118,13 @@ public:
 
 private:
     template <typename U>
-    void init_from_copy(const basic_weak_ptr<CBT, U>& r) {
+    void init_from_copy(const basic_weak_ptr<CBF, U>& r) {
         m = r.m;
         if (m.cb) m.cb->inc_weak_ref();
     }
 
     template <typename U>
-    void init_from_move(basic_weak_ptr<CBT, U>& r) {
+    void init_from_move(basic_weak_ptr<CBF, U>& r) {
         m = std::move(r.m);
     }
 
