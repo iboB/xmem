@@ -10,7 +10,7 @@ template <typename CBT, typename T>
 class basic_weak_ptr {
 public:
     using element_type = std::remove_extent_t<T>;
-    using control_block_type = typename CBT::base_type;
+    using control_block_type = typename CBT::cb_type;
 
     basic_weak_ptr() noexcept : m(nullptr) {}
 
@@ -128,7 +128,7 @@ private:
         m = std::move(r.m);
     }
 
-    impl::cb_ptr_pair<control_block_type, element_type> m;
+    cb_ptr_pair<control_block_type, element_type> m;
 };
 
 } // namespace xmem

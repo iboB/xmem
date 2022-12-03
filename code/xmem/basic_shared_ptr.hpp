@@ -2,68 +2,11 @@
 // SPDX-License-Identifier: MIT
 //
 #pragma once
+#include "cb_ptr_pair.hpp"
 #include "unique_ptr.hpp"
+#include "allocator_rebind.hpp"
 
 namespace xmem {
-
-namespace impl {
-// used in weak_ptr as well
-template <typename CB, typename T>
-struct cb_ptr_pair {
-    cb_ptr_pair() noexcept = default;
-
-    explicit cb_ptr_pair(std::nullptr_t) : cb(nullptr), ptr(nullptr) {}
-
-    cb_ptr_pair(const cb_ptr_pair&) noexcept = default;
-    cb_ptr_pair& operator=(const cb_ptr_pair&) noexcept = default;
-
-    template <typename U>
-    cb_ptr_pair(const cb_ptr_pair<CB, U>& r) noexcept
-        : cb(r.cb)
-        , ptr(r.ptr)
-    {}
-    template <typename U>
-    cb_ptr_pair& operator=(const cb_ptr_pair<CB, U>& r) noexcept {
-        cb = r.cb;
-        ptr = r.ptr;
-        return *this;
-    }
-
-    cb_ptr_pair(cb_ptr_pair&& r) noexcept : cb(r.cb), ptr(r.ptr) {
-        r.reset();
-    }
-    cb_ptr_pair& operator=(cb_ptr_pair&& r) noexcept {
-        cb = r.cb;
-        ptr = r.ptr;
-        r.reset();
-        return *this;
-    }
-
-    template <typename U>
-    cb_ptr_pair(cb_ptr_pair<CB, U>&& r) noexcept : cb(r.cb), ptr(r.ptr) {
-        r.reset();
-    }
-    template <typename U>
-    cb_ptr_pair& operator=(cb_ptr_pair<CB, U>&& r) noexcept {
-        cb = r.cb;
-        ptr = r.ptr;
-        r.reset();
-        return *this;
-    }
-
-    void reset() {
-        cb = nullptr;
-        ptr = nullptr;
-    }
-    void swap(cb_ptr_pair& r) {
-        std::swap(cb, r.cb);
-        std::swap(ptr, r.ptr);
-    }
-
-    CB* cb;
-    T* ptr;
-};
-} // namespace impl
 
 template <typename CBT, typename T>
 class basic_weak_ptr;
@@ -72,7 +15,7 @@ template <typename CBT, typename T>
 class basic_shared_ptr {
 public:
     using element_type = std::remove_extent_t<T>;
-    using control_block_type = typename CBT::base_type;
+    using control_block_type = typename CBT::cb_type;
     using weak_type = basic_weak_ptr<CBT, T>;
 
     basic_shared_ptr() noexcept : m(nullptr) {}
@@ -119,16 +62,14 @@ public:
     }
 
     template <typename U, typename D>
-    basic_shared_ptr(unique_ptr<U, D>&& uptr) {
-        m.ptr = uptr.get();
-        m.cb = new typename CBT::template uptr_type<U, D>(uptr);
-    }
+    basic_shared_ptr(unique_ptr<U, D>&& uptr)
+        : m(CBT::make_uptr_cb(uptr))
+    {}
 
     template <typename U, typename D>
     basic_shared_ptr& operator=(unique_ptr<U, D>&& uptr) {
         if (m.cb) m.cb->dec_strong_ref();
-        m.ptr = uptr.get();
-        m.cb = new typename CBT::template uptr_type<U, D>(uptr);
+        m = CBT::make_uptr_cb(uptr);
         return *this;
     }
 
@@ -184,8 +125,11 @@ public:
         return m.cb < r.m.cb;
     }
 
-    template <typename UCBT, typename U, typename... Args>
-    friend basic_shared_ptr<UCBT, U> make_basic_shared(Args&&... args);
+    //template <typename UCBT, typename U, typename Alloc, typename... Args>
+    //static basic_shared_ptr<UCBT, U> make(Alloc a, Args&&... args) {
+    //    using rsrc_type = typename CBT::template rsrc_type<T, Alloc>;
+
+    //}
 
 private:
     template <typename U>
@@ -199,7 +143,7 @@ private:
         m = std::move(r.m);
     }
 
-    impl::cb_ptr_pair<control_block_type, element_type> m;
+    cb_ptr_pair<control_block_type, element_type> m;
 
     template <typename, typename> friend class basic_shared_ptr;
     template <typename, typename> friend class basic_weak_pt;

@@ -2,7 +2,9 @@
 // SPDX-License-Identifier: MIT
 //
 #pragma once
+#include "cb_ptr_pair.hpp"
 #include "unique_ptr.hpp"
+#include "allocator_rebind.hpp"
 
 #include <new>
 
@@ -48,6 +50,10 @@ class local_control_block_uptr final : public local_control_block_base {
 public:
     local_control_block_uptr(uptr_t& uptr) : m_uptr(std::move(uptr)) {}
 
+    T* ptr() {
+        return m_uptr.get();
+    }
+
     virtual void destroy_resource() noexcept override { m_uptr.reset(); }
     virtual void destroy_self() noexcept override { delete this; }
 };
@@ -63,19 +69,27 @@ public:
         new (&m_obj) T(std::forward<Args>(args)...);
     }
 
+    T* ptr() {
+        return &m_obj;
+    }
+
     virtual void destroy_resource() noexcept override { m_obj.~T(); }
     virtual void destroy_self() noexcept override {
-        Alloc myalloc = *this; // slice
+        using self_alloc_type = typename allocator_rebind<Alloc>::template to<local_control_block_resource>;
+        self_alloc_type myalloc = (Alloc&)*this; // slice
         this->~local_control_block_base();
         myalloc.deallocate(this);
     }
 };
 
 struct local_control_block {
-    using base_type = local_control_block_base;
+    using cb_type = local_control_block_base;
 
-    template <typename T, typename D>
-    using uptr_type = local_control_block_uptr<T, D>;
+    template <typename T, typename Del>
+    static cb_ptr_pair<cb_type, T> make_uptr_cb(unique_ptr<T, Del>& uptr) {
+        auto cb = new local_control_block_uptr(uptr);
+        return {cb, cb->ptr()};
+    }
 
     template <typename T, typename A>
     using rsrc_type = local_control_block_resource<T, A>;

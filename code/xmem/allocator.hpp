@@ -6,6 +6,7 @@
 
 namespace xmem {
 
+// a bare-bones allocator which is enough for the needs of shared pointers
 template <typename T>
 class allocator {
     [[nodiscard]] T* allocate(size_t n) {
