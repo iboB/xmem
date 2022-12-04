@@ -146,7 +146,7 @@ private:
     cb_ptr_pair<control_block_type, element_type> m;
 
     template <typename, typename> friend class basic_shared_ptr;
-    template <typename, typename> friend class basic_weak_pt;
+    template <typename, typename> friend class basic_weak_ptr;
 };
 
 // compare

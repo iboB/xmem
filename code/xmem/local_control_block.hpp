@@ -27,7 +27,7 @@ public:
             dec_weak_ref();
         }
     }
-    uint32_t int_strong_ref_nz() noexcept {
+    uint32_t inc_strong_ref_nz() noexcept {
         if (!m_strong_refs) return 0;
         return ++m_strong_refs;
     }

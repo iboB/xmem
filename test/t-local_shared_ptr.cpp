@@ -11,7 +11,7 @@
 
 TEST_SUITE_BEGIN("local_shared_ptr");
 
-TEST_CASE("basic") {
+TEST_CASE("shared_ptr: basic") {
     using sptr = xmem::local_shared_ptr<obj>;
 
     obj::lifetime_stats stats;
@@ -98,7 +98,7 @@ TEST_CASE("basic") {
     }
 }
 
-TEST_CASE("basic compare/swap") {
+TEST_CASE("shared_ptr: compare/swap") {
     int vals[] = {1, 2};
 
     using uiptr = xmem::unique_ptr<int, void(*)(int*)>;
@@ -186,7 +186,7 @@ XMEM(TEST_CASE("make_shared_ptr") {
     CHECK(heist->data() == vdata);
 })
 
-TEST_CASE("cast and type erasure") {
+TEST_CASE("shared_ptr: cast and type erasure") {
     obj::lifetime_stats stats;
 
     auto c = xmem::make_local_shared<child>(1, 2);
@@ -211,4 +211,78 @@ TEST_CASE("cast and type erasure") {
 
     auto rp = reinterpret_cast<obj*>(v.get());
     CHECK(rp->val() == 3);
+}
+
+//////////////////////////////////////////////////////////
+
+TEST_CASE("weak_ptr basic") {
+    using sptr = xmem::local_shared_ptr<obj>;
+    using wptr = xmem::local_weak_ptr<obj>;
+
+    obj::lifetime_stats stats;
+    doctest::util::lifetime_counter_sentry _s(stats);
+
+    {
+        wptr e;
+        XMEM(CHECK_FALSE(e));
+        XMEM(CHECK_FALSE(e.owner()));
+        CHECK(e.use_count() == 0);
+        CHECK(e.expired());
+        CHECK_FALSE(e.lock());
+
+        wptr e2 = e;
+        XMEM(CHECK_FALSE(e2));
+        XMEM(CHECK_FALSE(e2.owner()));
+        CHECK(e2.use_count() == 0);
+        CHECK(e2.expired());
+        CHECK_FALSE(e2.lock());
+    }
+
+    CHECK(stats.total == 0);
+
+    {
+        sptr se;
+        wptr we = se;
+        XMEM(CHECK_FALSE(we));
+        XMEM(CHECK_FALSE(we.owner()));
+        CHECK(we.use_count() == 0);
+        CHECK(se.use_count() == 0);
+        CHECK_FALSE(we.lock());
+        CHECK(we.expired());
+    }
+
+    CHECK(stats.total == 0);
+
+    {
+        auto se = xmem::make_local_shared<child>(5, 10);
+        wptr w = se;
+        CHECK(w.use_count() == 1);
+        CHECK(se.use_count() == 1);
+        XMEM(CHECK(w));
+        XMEM(CHECK(w.owner() == se.owner()));
+        wptr w2 = w;
+        XMEM(CHECK(w2.owner() == se.owner()));
+        CHECK(w2.lock() == se);
+        sptr se2 = se;
+        CHECK(w.use_count() == 2);
+
+        se.reset();
+        se2.reset();
+        CHECK(stats.living == 0);
+
+        CHECK(w.use_count() == 0);
+        CHECK(w.expired());
+        XMEM(CHECK(w));
+        XMEM(CHECK(w.owner()));
+
+        w.reset();
+        XMEM(CHECK_FALSE(w));
+        XMEM(CHECK_FALSE(w.owner()));
+
+        CHECK_FALSE(w2.lock());
+        XMEM(CHECK(w2));
+        XMEM(CHECK(w2.owner()));
+    }
+
+    CHECK(stats.total == 1);
 }
