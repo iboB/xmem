@@ -106,6 +106,14 @@ TEST_CASE("make_unique") {
     obj::lifetime_stats stats;
 
     {
+        auto uptr = test::make_unique<obj>();
+        CHECK(uptr->a == 11);
+        CHECK(uptr->b.empty());
+    }
+
+    {
+        obj::lifetime_stats lstats;
+
         auto uptr = test::make_unique<obj>(1, "ads");
         CHECK(uptr);
         CHECK(uptr->a == 1);
@@ -118,12 +126,12 @@ TEST_CASE("make_unique") {
         CHECK(uptr2);
         CHECK(uptr2.get() == p);
 
-        CHECK(stats.d_ctr == 1);
-        CHECK(stats.living == 1);
+        CHECK(lstats.d_ctr == 1);
+        CHECK(lstats.living == 1);
     }
 
     CHECK(stats.living == 0);
-    CHECK(stats.total == 1);
+    CHECK(stats.total == 2);
 }
 
 TEST_CASE("template move") {

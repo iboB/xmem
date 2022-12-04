@@ -49,9 +49,9 @@ class local_control_block_uptr final : public local_control_block_base {
     using uptr_t = unique_ptr<T, D>;
     uptr_t m_uptr;
 public:
-    local_control_block_uptr(uptr_t& uptr) : m_uptr(std::move(uptr)) {}
+    local_control_block_uptr(uptr_t& uptr) noexcept : m_uptr(std::move(uptr)) {}
 
-    T* ptr() {
+    [[nodiscard]] T* ptr() {
         return m_uptr.get();
     }
 
@@ -75,24 +75,14 @@ public:
     explicit local_control_block_resource(Alloc&& a) : Alloc(std::move(a)) {}
     ~local_control_block_resource() {}
 
-    static local_control_block_resource* create() {
-        Alloc a;
+    [[nodiscard]] static local_control_block_resource* create(Alloc a = {}) {
         auto myalloc = get_self_alloc(a);
         auto self = myalloc.allocate(1);
         new (self) local_control_block_resource(std::move(a));
         return self;
     }
 
-    template <typename... Args>
-    void create_resource(Args&&... args) {
-        new (&m_obj) T(std::forward<Args>(args)...);
-    }
-
-    void create_resource_for_overwrite() {
-        new (&m_obj) T;
-    }
-
-    T* ptr() {
+    [[nodiscard]] T* ptr() {
         return &m_obj;
     }
 
@@ -111,15 +101,22 @@ struct local_control_block {
     using cb_type = local_control_block_base;
 
     template <typename T, typename Del>
-    static cb_ptr_pair<cb_type, T> make_uptr_cb(unique_ptr<T, Del>& uptr) {
+    [[nodiscard]] static cb_ptr_pair<cb_type, T> make_uptr_cb(unique_ptr<T, Del>& uptr) {
         auto cb = new local_control_block_uptr(uptr);
         return {cb, cb->ptr()};
     }
 
     template <typename T, typename... Args>
-    static cb_ptr_pair<cb_type, T> make_resource_cb(Args&&... args) {
+    [[nodiscard]] static cb_ptr_pair<cb_type, T> make_resource_cb(Args&&... args) {
         auto cb = local_control_block_resource_dalloc<T>::create();
-        cb->create_resource(std::forward<Args>(args)...);
+        new (cb->ptr()) T(std::forward<Args>(args)...);
+        return {cb, cb->ptr()};
+    }
+
+    template <typename T>
+    [[nodiscard]] static cb_ptr_pair<cb_type, T> make_resource_cb_for_overwrite() {
+        auto cb = local_control_block_resource_dalloc<T>::create();
+        new (cb->ptr()) T;
         return {cb, cb->ptr()};
     }
 };

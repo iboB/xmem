@@ -115,8 +115,8 @@ make_unique(Args&&... args) {
 }
 
 template <typename T>
-[[nodiscard]] auto make_unique_ptr(T&& t) -> unique_ptr<typename std::remove_reference<T>::type> {
-    using RRT = typename std::remove_reference<T>::type;
+[[nodiscard]] auto make_unique_ptr(T&& t) -> unique_ptr<std::remove_reference_t<T>> {
+    using RRT = std::remove_reference_t<T>;
     return unique_ptr<RRT>(new RRT(std::forward<T>(t)));
 }
 

@@ -139,14 +139,52 @@ TEST_CASE("basic compare/swap") {
     CHECK(p1 < p0);
 }
 
-TEST_CASE("make shared") {
+TEST_CASE("make_shared") {
     obj::lifetime_stats stats;
 
     {
-        auto sptr = xmem::make_local_shared<obj>(1, "2");
+        auto sptr = xmem::make_local_shared<obj>();
+        CHECK(sptr->a == 11);
+        CHECK(sptr->b.empty());
     }
+
+    {
+        auto sptr = xmem::make_local_shared<obj>(1, "abc");
+        CHECK(sptr->a == 1);
+        CHECK(sptr->b == "abc");
+
+        auto s2 = sptr;
+        auto s3 = sptr;
+
+        CHECK(sptr.use_count() == 3);
+        CHECK(stats.living == 1);
+    }
+
+    CHECK(stats.total == 2);
 }
 
+STD20(TEST_CASE("make_shared_for_overwrite") {
+    // should compile
+    auto ip = xmem::make_local_shared_for_overwrite<int>();
+    CHECK(ip);
+
+    auto op = xmem::make_local_shared_for_overwrite<obj>();
+    CHECK(op->a == 11);
+})
+
+XMEM(TEST_CASE("make_shared_ptr") {
+    std::vector<int> vec = {1, 2, 3};
+    auto copy = test::make_local_shared_ptr(vec);
+    CHECK(copy->size() == 3);
+    CHECK(vec.size() == 3);
+    CHECK(vec.data() != copy->data());
+    copy->at(1) = 5;
+    CHECK(*copy == std::vector<int>({1, 5, 3}));
+    auto vdata = vec.data();
+    auto heist = test::make_local_shared_ptr(std::move(vec));
+    CHECK(heist->size() == 3);
+    CHECK(heist->data() == vdata);
+})
 
 TEST_CASE("cast and type erasure") {
     using sptr = xmem::local_shared_ptr<obj>;
