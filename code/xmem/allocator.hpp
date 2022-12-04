@@ -10,6 +10,8 @@ namespace xmem {
 template <typename T>
 class allocator {
 public:
+    using value_type = T;
+
     allocator() noexcept = default;
     allocator(const allocator&) noexcept = default;
     template <typename U>

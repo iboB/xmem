@@ -18,3 +18,6 @@ struct child : obj {
     child(int a, int c) : obj(a), c(c) {}
     virtual int val() const override { return a + c; }
 };
+
+struct alignas(64) avx_512 { double d[8]; };
+

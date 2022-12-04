@@ -13,4 +13,8 @@ endmacro()
 
 xmem_test(unique_ptr t-unique_ptr.cpp)
 xmem_test(sanity_std_unique_ptr t-sanity_std_unique_ptr.cpp)
+
+xmem_test(allocator t-allocator.cpp)
+xmem_test(allocator_std_compat t-allocator_std_compat.cpp)
+
 xmem_test(local_shared_ptr t-local_shared_ptr.cpp)
