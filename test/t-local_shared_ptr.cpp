@@ -187,9 +187,28 @@ XMEM(TEST_CASE("make_shared_ptr") {
 })
 
 TEST_CASE("cast and type erasure") {
-    using sptr = xmem::local_shared_ptr<obj>;
+    obj::lifetime_stats stats;
+
+    auto c = xmem::make_local_shared<child>(1, 2);
+
+    xmem::local_shared_ptr<obj> p = c;
+    CHECK(p);
+    CHECK(p.use_count() == 2);
+    CHECK(p->val() == 3);
 
     {
-
+        xmem::local_shared_ptr<const obj> cp = c;
+        CHECK(cp);
+        CHECK(cp.use_count() == 3);
+        CHECK(cp->val() == 3);
     }
+
+    xmem::local_shared_ptr<void> v = p;
+    p.reset();
+    c.reset();
+
+    CHECK(v.use_count() == 1);
+
+    auto rp = reinterpret_cast<obj*>(v.get());
+    CHECK(rp->val() == 3);
 }
