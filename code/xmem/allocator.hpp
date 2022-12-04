@@ -15,13 +15,15 @@ public:
     template <typename U>
     allocator(const allocator<U>&) noexcept {}
 
+    static inline constexpr std::align_val_t align_val{alignof(T)};
+
     [[nodiscard]] T* allocate(size_t n) {
-        auto ret = ::operator new(n * sizeof(T), std::align_val_t{alignof(T)});
+        auto ret = ::operator new(n * sizeof(T), align_val);
         return reinterpret_cast<T*>(ret);
     }
     void deallocate(T* ptr, size_t) {
         auto del = reinterpret_cast<void*>(ptr);
-        delete del;
+        ::operator delete(del, align_val);
     }
 };
 

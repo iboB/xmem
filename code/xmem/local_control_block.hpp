@@ -78,8 +78,8 @@ public:
     static local_control_block_resource* create() {
         Alloc a;
         auto myalloc = get_self_alloc(a);
-        auto* self = myalloc.allocate(1);
-        new (&self) local_control_block_resource(std::move(a));
+        auto self = myalloc.allocate(1);
+        new (self) local_control_block_resource(std::move(a));
         return self;
     }
 
