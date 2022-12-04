@@ -143,7 +143,7 @@ TEST_CASE("make shared") {
     obj::lifetime_stats stats;
 
     {
-        //auto sptr = xmem::make_local_shared<
+        auto sptr = xmem::make_local_shared<obj>(1, "2");
     }
 }
 

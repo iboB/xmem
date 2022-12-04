@@ -19,6 +19,7 @@ public:
     using weak_type = basic_weak_ptr<CBF, T>;
 
     basic_shared_ptr() noexcept : m(nullptr) {}
+    explicit basic_shared_ptr(cb_ptr_pair<control_block_type, element_type> cbptr) : m(cbptr) {}
     basic_shared_ptr(std::nullptr_t) noexcept : basic_shared_ptr() {};
 
     basic_shared_ptr(const basic_shared_ptr& r) noexcept {
@@ -124,12 +125,6 @@ public:
     [[nodiscard]] bool owner_before(const basic_shared_ptr<UCBF, U>& r) const noexcept {
         return m.cb < r.m.cb;
     }
-
-    //template <typename UCBF, typename U, typename Alloc, typename... Args>
-    //static basic_shared_ptr<UCBF, U> make(Alloc a, Args&&... args) {
-    //    using rsrc_type = typename CBF::template rsrc_type<T, Alloc>;
-
-    //}
 
 private:
     template <typename U>

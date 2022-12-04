@@ -12,8 +12,8 @@ using local_shared_ptr = basic_shared_ptr<local_control_block, T>;
 template <typename T>
 using local_weak_ptr = basic_weak_ptr<local_control_block, T>;
 
-//template <typename T, typename... Args>
-//local_shared_ptr<T> make_local_shared(Args&&... args) {
-//
-//}
+template <typename T, typename... Args>
+local_shared_ptr<T> make_local_shared(Args&&... args) {
+    return local_shared_ptr<T>(local_control_block::make_resource_cb<T>(std::forward<Args>(args)...));
+}
 }

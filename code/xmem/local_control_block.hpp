@@ -64,10 +64,32 @@ class local_control_block_resource final : public local_control_block_base, priv
     union {
         T m_obj;
     };
+
+    using self_alloc_type = typename allocator_rebind<Alloc>::template to<local_control_block_resource>;
+
+    static self_alloc_type get_self_alloc(const Alloc& a) {
+        self_alloc_type myalloc = a;
+        return myalloc;
+    }
 public:
+    explicit local_control_block_resource(Alloc&& a) : Alloc(std::move(a)) {}
+    ~local_control_block_resource() {}
+
+    static local_control_block_resource* create() {
+        Alloc a;
+        auto myalloc = get_self_alloc(a);
+        auto* self = myalloc.allocate(1);
+        new (&self) local_control_block_resource(std::move(a));
+        return self;
+    }
+
     template <typename... Args>
-    local_control_block_resource(Alloc a, Args&&... args) : Alloc(std::move(a)) {
+    void create_resource(Args&&... args) {
         new (&m_obj) T(std::forward<Args>(args)...);
+    }
+
+    void create_resource_for_overwrite() {
+        new (&m_obj) T;
     }
 
     T* ptr() {
@@ -76,10 +98,9 @@ public:
 
     virtual void destroy_resource() noexcept override { m_obj.~T(); }
     virtual void destroy_self() noexcept override {
-        using self_alloc_type = typename allocator_rebind<Alloc>::template to<local_control_block_resource>;
-        self_alloc_type myalloc = (Alloc&)*this; // slice
-        this->~local_control_block_base();
-        myalloc.deallocate(this);
+        self_alloc_type myalloc = get_self_alloc(*this); // slice
+        this->~local_control_block_resource();
+        myalloc.deallocate(this, 1);
     }
 };
 
@@ -97,10 +118,8 @@ struct local_control_block {
 
     template <typename T, typename... Args>
     static cb_ptr_pair<cb_type, T> make_resource_cb(Args&&... args) {
-        using rcb_type = local_control_block_resource_dalloc<T>;
-        allocator<rcb_type> alloc;
-        auto cb = alloc.allocate(1);
-        new (cb) rcb_type(std::forward<Args>(args)...);
+        auto cb = local_control_block_resource_dalloc<T>::create();
+        cb->create_resource(std::forward<Args>(args)...);
         return {cb, cb->ptr()};
     }
 };
