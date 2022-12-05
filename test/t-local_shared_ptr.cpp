@@ -284,5 +284,17 @@ TEST_CASE("weak_ptr basic") {
         XMEM(CHECK(w2.owner()));
     }
 
-    CHECK(stats.total == 1);
+    {
+        auto sp = xmem::make_local_shared<obj>(5, "xyz");
+        {
+            wptr wp = sp;
+            CHECK_FALSE(wp.expired());
+            CHECK(wp.use_count() == 1);
+        }
+        CHECK(sp->a == 5);
+        CHECK(sp->b == "xyz");
+    }
+
+    CHECK(stats.total == 2);
+    CHECK(stats.living == 0);
 }
