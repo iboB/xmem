@@ -86,7 +86,7 @@ public:
 
     template <typename U>
     basic_shared_ptr(const basic_shared_ptr<CBF, U>& r, T* aptr) {
-        init_from_copy(cb_ptr_pair_type(r.cb, aptr));
+        init_from_copy(cb_ptr_pair_type(r.m.cb, aptr));
     }
 
     ~basic_shared_ptr() {

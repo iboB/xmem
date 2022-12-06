@@ -57,17 +57,23 @@ public:
     }
 
     template <typename U>
-    basic_weak_ptr(const basic_shared_ptr<CBF, U>& sptr) noexcept
-        : m(sptr.m)
-    {
-        if (m.cb) m.cb->inc_weak_ref();
+    basic_weak_ptr(const basic_shared_ptr<CBF, U>& sptr) noexcept {
+        init_from_copy(sptr.m);
     }
     template <typename U>
     basic_weak_ptr& operator=(const basic_shared_ptr<CBF, U>& sptr) noexcept {
         if (m.cb) m.cb->dec_weak_ref();
-        m = sptr.m;
-        if (m.cb) m.cb->inc_weak_ref();
+        init_from_copy(sptr.m);
         return *this;
+    }
+
+    template <typename U>
+    basic_weak_ptr(const basic_weak_ptr<CBF, U>& r, T* aptr) {
+        init_from_copy(cb_ptr_pair_type(r.m.cb, aptr));
+    }
+    template <typename U>
+    basic_weak_ptr(const basic_shared_ptr<CBF, U>& sptr, T* aptr) noexcept {
+        init_from_copy(cb_ptr_pair_type(sptr.m.cb, aptr));
     }
 
     ~basic_weak_ptr() {

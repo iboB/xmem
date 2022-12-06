@@ -213,6 +213,24 @@ TEST_CASE("shared_ptr: cast and type erasure") {
     CHECK(rp->val() == 3);
 }
 
+TEST_CASE("shared_ptr: alias") {
+    obj::lifetime_stats stats;
+
+    auto c = xmem::make_local_shared<child>(10, 20);
+
+    auto i = xmem::local_shared_ptr<int>(c, &c->a);
+    auto i2 = xmem::local_shared_ptr<int>(c, &c->c);
+
+    CHECK(i.use_count() == 3);
+
+    c.reset();
+
+    CHECK(i2.use_count() == 2);
+
+    CHECK(*i == 10);
+    CHECK(*i2 == 20);
+}
+
 //////////////////////////////////////////////////////////
 
 TEST_CASE("weak_ptr basic") {
