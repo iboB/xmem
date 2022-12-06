@@ -68,7 +68,7 @@ public:
     }
 
     template <typename U>
-    basic_weak_ptr(const basic_weak_ptr<CBF, U>& r, T* aptr) {
+    basic_weak_ptr(const basic_weak_ptr<CBF, U>& r, T* aptr) noexcept {
         init_from_copy(cb_ptr_pair_type(r.m.cb, aptr));
     }
     template <typename U>

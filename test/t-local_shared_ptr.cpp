@@ -219,7 +219,12 @@ TEST_CASE("shared_ptr: alias") {
     auto c = xmem::make_local_shared<child>(10, 20);
 
     auto i = xmem::local_shared_ptr<int>(c, &c->a);
+    CHECK(i.get() == &c->a);
+    XMEM(CHECK(i.owner() == c.owner()));
+
     auto i2 = xmem::local_shared_ptr<int>(c, &c->c);
+    CHECK(i2.get() == &c->c);
+    XMEM(CHECK(i2.owner() == i.owner()));
 
     CHECK(i.use_count() == 3);
 
@@ -315,4 +320,26 @@ TEST_CASE("weak_ptr basic") {
 
     CHECK(stats.total == 2);
     CHECK(stats.living == 0);
+}
+
+TEST_CASE("weak_ptr: alias") {
+    auto c = xmem::make_local_shared<child>(10, 20);
+
+    xmem::local_weak_ptr<int> wca(c, &c->a);
+    CHECK_FALSE(wca.expired());
+    XMEM(CHECK(wca.owner() == c.owner()));
+
+    xmem::local_weak_ptr<int> wcc(wca, &c->c);
+    CHECK_FALSE(wcc.expired());
+    XMEM(CHECK(wcc.owner() == wca.owner()));
+
+    CHECK(wca.use_count() == 1);
+
+    CHECK(wca.lock().get() == &c->a);
+    CHECK(wcc.lock().get() == &c->c);
+
+    c.reset();
+
+    CHECK(wca.expired());
+    CHECK(wcc.expired());
 }

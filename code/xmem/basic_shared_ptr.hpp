@@ -85,7 +85,7 @@ public:
     basic_shared_ptr(U* p, D d) : basic_shared_ptr(unique_ptr<U, D>(p, std::move(d))) {}
 
     template <typename U>
-    basic_shared_ptr(const basic_shared_ptr<CBF, U>& r, T* aptr) {
+    basic_shared_ptr(const basic_shared_ptr<CBF, U>& r, T* aptr) noexcept {
         init_from_copy(cb_ptr_pair_type(r.m.cb, aptr));
     }
 
@@ -139,13 +139,13 @@ public:
 
 private:
     template <typename U>
-    void init_from_copy(const cb_ptr_pair<control_block_type, U>& r) {
+    void init_from_copy(const cb_ptr_pair<control_block_type, U>& r) noexcept {
         m = r;
         if (m.cb) m.cb->inc_strong_ref();
     }
 
     template <typename U>
-    void init_from_move(basic_shared_ptr<CBF, U>& r) {
+    void init_from_move(basic_shared_ptr<CBF, U>& r) noexcept {
         m = std::move(r.m);
     }
 
