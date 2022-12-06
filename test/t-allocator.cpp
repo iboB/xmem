@@ -61,6 +61,6 @@ TEST_CASE("convert/rebind") {
 
     a_int_t a_int = a_char;
 
-    xmem::allocator<obj> a_obj = a_int;
+    [[maybe_unused]] xmem::allocator<obj> a_obj = a_int;
 }
 
