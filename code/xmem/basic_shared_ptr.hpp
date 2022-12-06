@@ -19,7 +19,7 @@ public:
     using weak_type = basic_weak_ptr<CBF, T>;
 
     basic_shared_ptr() noexcept : m(nullptr) {}
-    explicit basic_shared_ptr(cb_ptr_pair<control_block_type, element_type> cbptr) : m(cbptr) {}
+    explicit basic_shared_ptr(cb_ptr_pair<control_block_type, element_type>&& cbptr) : m(cbptr) {}
     basic_shared_ptr(std::nullptr_t) noexcept : basic_shared_ptr() {};
 
     basic_shared_ptr(const basic_shared_ptr& r) noexcept {

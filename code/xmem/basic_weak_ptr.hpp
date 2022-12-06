@@ -13,6 +13,7 @@ public:
     using control_block_type = typename CBF::cb_type;
 
     basic_weak_ptr() noexcept : m(nullptr) {}
+    explicit basic_weak_ptr(cb_ptr_pair<control_block_type, element_type>&& cbptr) : m(cbptr) {}
 
     basic_weak_ptr(const basic_weak_ptr& r) noexcept {
         init_from_copy(r);
