@@ -17,28 +17,29 @@ public:
     using element_type = std::remove_extent_t<T>;
     using control_block_type = typename CBF::cb_type;
     using weak_type = basic_weak_ptr<CBF, T>;
+    using cb_ptr_pair_type = cb_ptr_pair<control_block_type, element_type>;
 
     basic_shared_ptr() noexcept : m(nullptr) {}
-    explicit basic_shared_ptr(cb_ptr_pair<control_block_type, element_type>&& cbptr) : m(cbptr) {}
+    explicit basic_shared_ptr(cb_ptr_pair_type&& cbptr) : m(cbptr) {}
     basic_shared_ptr(std::nullptr_t) noexcept : basic_shared_ptr() {};
 
     basic_shared_ptr(const basic_shared_ptr& r) noexcept {
-        init_from_copy(r);
+        init_from_copy(r.m);
     }
     basic_shared_ptr& operator=(const basic_shared_ptr& r) noexcept {
         if (m.cb) m.cb->dec_strong_ref();
-        init_from_copy(r);
+        init_from_copy(r.m);
         return *this;
     }
 
     template <typename U>
     basic_shared_ptr(const basic_shared_ptr<CBF, U>& r) noexcept {
-        init_from_copy(r);
+        init_from_copy(r.m);
     }
     template <typename U>
     basic_shared_ptr& operator=(const basic_shared_ptr<CBF, U>& r) noexcept {
         if (m.cb) m.cb->dec_strong_ref();
-        init_from_copy(r);
+        init_from_copy(r.m);
         return *this;
     }
 
@@ -83,6 +84,11 @@ public:
     template <typename U, typename D>
     basic_shared_ptr(U* p, D d) : basic_shared_ptr(unique_ptr<U, D>(p, std::move(d))) {}
 
+    template <typename U>
+    basic_shared_ptr(const basic_shared_ptr<CBF, U>& r, T* aptr) {
+        init_from_copy(cb_ptr_pair_type(r.cb, aptr));
+    }
+
     ~basic_shared_ptr() {
         if (m.cb) m.cb->dec_strong_ref();
     }
@@ -115,7 +121,7 @@ public:
     T* operator->() const noexcept { return m.ptr; }
 
     template <typename TT = T, typename Elem = element_type, typename = std::enable_if_t<!std::is_void_v<T>> >
-    [[nodiscard]] Elem& operator[](size_t i) const noexcept {return m.ptr[i]; }
+    [[nodiscard]] Elem& operator[](size_t i) const noexcept { return m.ptr[i]; }
 
     [[nodiscard]] long use_count() const noexcept {
         if (!m.cb) return 0;
@@ -133,8 +139,8 @@ public:
 
 private:
     template <typename U>
-    void init_from_copy(const basic_shared_ptr<CBF, U>& r) {
-        m = r.m;
+    void init_from_copy(const cb_ptr_pair<control_block_type, U>& r) {
+        m = r;
         if (m.cb) m.cb->inc_strong_ref();
     }
 
@@ -143,7 +149,7 @@ private:
         m = std::move(r.m);
     }
 
-    cb_ptr_pair<control_block_type, element_type> m;
+    cb_ptr_pair_type m;
 
     template <typename, typename> friend class basic_shared_ptr;
     template <typename, typename> friend class basic_weak_ptr;
