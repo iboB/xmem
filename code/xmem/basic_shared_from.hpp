@@ -24,8 +24,6 @@ protected:
     basic_shared_from& operator=(const basic_shared_from&) {}
 
 public:
-    using tag_basic_shared_from = void;
-
     sptr<void> shared_from_this() {
         return m_wptr.lock();
     }
@@ -58,8 +56,6 @@ class basic_enable_shared_from_this : public basic_enable_shared_from<CBF> {
     template <typename T>
     using sptr = basic_weak_ptr<CBF, T>;
 public:
-    using tag_basic_shared_from = super::tag_basic_shared_from;
-
     sptr<T> shared_from_this() {
         return this->shared_from(static_cast<T*>(this));
     }
