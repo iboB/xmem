@@ -115,12 +115,12 @@ public:
 
     [[nodiscard]] element_type* get() const noexcept { return m.ptr; }
 
-    template <typename TT = T, typename = std::enable_if_t<!std::is_void_v<T>>>
+    template <typename TT = T, typename = std::enable_if_t<!std::is_void_v<TT>>>
     [[nodiscard]] TT& operator*() const noexcept { return *m.ptr; }
 
     T* operator->() const noexcept { return m.ptr; }
 
-    template <typename TT = T, typename Elem = element_type, typename = std::enable_if_t<!std::is_void_v<T>> >
+    template <typename TT = T, typename Elem = element_type, typename = std::enable_if_t<!std::is_void_v<TT>> >
     [[nodiscard]] Elem& operator[](size_t i) const noexcept { return m.ptr[i]; }
 
     [[nodiscard]] long use_count() const noexcept {
