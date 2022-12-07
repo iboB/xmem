@@ -14,7 +14,7 @@ public:
     using cb_ptr_pair_type = cb_ptr_pair<control_block_type, element_type>;
 
     basic_weak_ptr() noexcept : m(nullptr) {}
-    explicit basic_weak_ptr(cb_ptr_pair_type&& cbptr) {
+    explicit basic_weak_ptr(const cb_ptr_pair_type& cbptr) noexcept {
         init_from_copy(cbptr);
     }
 
@@ -128,13 +128,13 @@ public:
 
 private:
     template <typename U>
-    void init_from_copy(const cb_ptr_pair<control_block_type, U>& r) {
+    void init_from_copy(const cb_ptr_pair<control_block_type, U>& r) noexcept {
         m = r;
         if (m.cb) m.cb->inc_weak_ref();
     }
 
     template <typename U>
-    void init_from_move(basic_weak_ptr<CBF, U>& r) {
+    void init_from_move(basic_weak_ptr<CBF, U>& r) noexcept {
         m = std::move(r.m);
     }
 

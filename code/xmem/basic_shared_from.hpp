@@ -14,37 +14,37 @@ class basic_enable_shared_from {
     template <typename T>
     using sptr = basic_weak_ptr<CBF, T>;
 
-    wptr<void> m_wptr;
+    using control_block_type = typename CBF::cb_type;
+    cb_ptr_pair<control_block_type, void> m;
 protected:
-    basic_shared_from() = default;
+    basic_shared_from() : m(nullptr) {}
     ~basic_shared_from() = default;
 
-    // don't touch wptr on copy
+    // don't touch m on copy
     basic_shared_from(const basic_shared_from&) {}
     basic_shared_from& operator=(const basic_shared_from&) {}
 
 public:
     sptr<void> shared_from_this() {
-        return m_wptr.lock();
+        if (m.cb) m.cb->inc_strong_ref();
+        return {m};
     }
     sptr<const void> shared_from_this() const {
-        return m_wptr.lock();
+        if (m.cb) m.cb->inc_strong_ref();
+        return {m};
     }
-    wptr<void> weak_from_this() {
-        return m_wptr;
-    }
-    wptr<const void> weak_from_this() const {
-        return m_wptr;
-    }
+    wptr<void> weak_from_this() { return {m}; }
+    wptr<const void> weak_from_this() { return {m}; }
 
     template <typename T>
     sptr<T> shared_from(T* ptr) const {
-        return sptr<T>(m_wptr.lock(), ptr);
+        if (m.cb) m.cb->inc_strong_ref();
+        return sptr<T>(cb_ptr_pair<control_block_type, T>{m.cb, ptr});
     }
 
     template <typename T>
     sptr<T> weak_from(T* ptr) const {
-        return wptr<T>(m_wptr, ptr);
+        return wptr<T>(cb_ptr_pair<control_block_type, T>{m.cb, ptr});
     }
 };
 

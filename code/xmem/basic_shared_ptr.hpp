@@ -11,6 +11,9 @@ namespace xmem {
 template <typename CBF, typename T>
 class basic_weak_ptr;
 
+template <typename CBF>
+class basic_enable_shared_from;
+
 template <typename CBF, typename T>
 class basic_shared_ptr {
 public:
@@ -20,7 +23,7 @@ public:
     using cb_ptr_pair_type = cb_ptr_pair<control_block_type, element_type>;
 
     basic_shared_ptr() noexcept : m(nullptr) {}
-    explicit basic_shared_ptr(cb_ptr_pair_type&& cbptr) : m(cbptr) {}
+    explicit basic_shared_ptr(const cb_ptr_pair_type& cbptr) noexcept : m(cbptr) {}
     basic_shared_ptr(std::nullptr_t) noexcept : basic_shared_ptr() {};
 
     basic_shared_ptr(const basic_shared_ptr& r) noexcept {
@@ -153,6 +156,7 @@ private:
 
     template <typename, typename> friend class basic_shared_ptr;
     template <typename, typename> friend class basic_weak_ptr;
+    template <typename> class basic_enable_shared_from;
 };
 
 // compare
