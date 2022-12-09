@@ -234,6 +234,11 @@ TEST_CASE("shared_ptr: alias") {
 
     CHECK(*i == 10);
     CHECK(*i2 == 20);
+
+    // alias null should be safe
+    i = xmem::local_shared_ptr<int>(c, &c->a);
+    CHECK_FALSE(i);
+    CHECK(i.use_count() == 0);
 }
 
 //////////////////////////////////////////////////////////
@@ -342,4 +347,46 @@ TEST_CASE("weak_ptr: alias") {
 
     CHECK(wca.expired());
     CHECK(wcc.expired());
+
+    // alias null should be safe
+    wca = xmem::local_weak_ptr<int>(c, &c->a);
+    CHECK_FALSE(wca);
+    CHECK(wca.expired());
+
+    wcc = xmem::local_weak_ptr<int>(wca, &c->c);
+    CHECK_FALSE(wcc);
+    CHECK(wcc.expired());
+}
+
+//////////////////////////////////////////////////////////
+
+class sf_type : public xmem::enable_local_shared_from {
+public:
+    int id;
+
+    using xmem::enable_local_shared_from::weak_from_this;
+    using xmem::enable_local_shared_from::shared_from_this;
+
+    xmem::local_shared_ptr<sf_type> clone() {
+        return shared_from(this);
+    }
+};
+
+TEST_CASE("shared_from: basic") {
+    {
+        sf_type t;
+        auto sp = t.shared_from_this();
+        CHECK_FALSE(sp);
+        CHECK(sp.use_count() == 0);
+        auto wp = t.weak_from_this();
+        CHECK_FALSE(wp);
+        CHECK_FALSE(wp.owner());
+        CHECK_FALSE(t.clone());
+    }
+
+    {
+        auto sfptr = xmem::make_local_shared<sf_type>();
+        auto sp = sfptr->shared_from_this();
+        CHECK(sp == sfptr);
+    }
 }

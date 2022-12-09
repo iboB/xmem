@@ -6,6 +6,7 @@
 #include "unique_ptr.hpp"
 #include "allocator_rebind.hpp"
 #include "allocator.hpp"
+#include "basic_shared_from.hpp"
 
 #include <new>
 
@@ -100,24 +101,35 @@ using local_control_block_resource_dalloc = local_control_block_resource<T, allo
 struct local_control_block {
     using cb_type = local_control_block_base;
 
+    template <typename T>
+    static cb_ptr_pair<cb_type, T> prepare_pair(cb_type* cb, T* ptr) {
+        using ebf_type = basic_enable_shared_from<local_control_block>;
+        if constexpr (std::is_base_of_v<ebf_type, T>) {
+            ebf_type* ebf = ptr;
+            ebf->m.cb = cb;
+            ebf->m.ptr = ptr;
+        }
+        return {cb, ptr};
+    }
+
     template <typename T, typename Del>
     [[nodiscard]] static cb_ptr_pair<cb_type, T> make_uptr_cb(unique_ptr<T, Del>& uptr) {
         auto cb = new local_control_block_uptr(uptr);
-        return {cb, cb->ptr()};
+        return prepare_pair(cb, cb->ptr());
     }
 
     template <typename T, typename... Args>
     [[nodiscard]] static cb_ptr_pair<cb_type, T> make_resource_cb(Args&&... args) {
         auto cb = local_control_block_resource_dalloc<T>::create();
         new (cb->ptr()) T(std::forward<Args>(args)...);
-        return {cb, cb->ptr()};
+        return prepare_pair(cb, cb->ptr());
     }
 
     template <typename T>
     [[nodiscard]] static cb_ptr_pair<cb_type, T> make_resource_cb_for_overwrite() {
         auto cb = local_control_block_resource_dalloc<T>::create();
         new (cb->ptr()) T;
-        return {cb, cb->ptr()};
+        return prepare_pair(cb, cb->ptr());
     }
 };
 

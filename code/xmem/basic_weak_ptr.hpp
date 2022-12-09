@@ -71,10 +71,18 @@ public:
 
     template <typename U>
     basic_weak_ptr(const basic_weak_ptr<CBF, U>& r, T* aptr) noexcept {
+        if (!r) {
+            m.reset();
+            return;
+        }
         init_from_copy(cb_ptr_pair_type(r.m.cb, aptr));
     }
     template <typename U>
     basic_weak_ptr(const basic_shared_ptr<CBF, U>& sptr, T* aptr) noexcept {
+        if (!sptr.m.cb) {
+            m.reset();
+            return;
+        }
         init_from_copy(cb_ptr_pair_type(sptr.m.cb, aptr));
     }
 

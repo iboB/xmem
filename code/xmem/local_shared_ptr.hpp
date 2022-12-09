@@ -9,8 +9,14 @@
 namespace xmem {
 template <typename T>
 using local_shared_ptr = basic_shared_ptr<local_control_block, T>;
+
 template <typename T>
 using local_weak_ptr = basic_weak_ptr<local_control_block, T>;
+
+using enable_local_shared_from = basic_enable_shared_from<local_control_block>;
+
+template <typename T>
+using enable_local_shared_from_this = basic_enable_shared_from_this<local_control_block, T>;
 
 template <typename T, typename... Args>
 [[nodiscard]] local_shared_ptr<T> make_local_shared(Args&&... args) {

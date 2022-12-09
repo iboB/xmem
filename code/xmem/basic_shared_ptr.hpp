@@ -89,6 +89,10 @@ public:
 
     template <typename U>
     basic_shared_ptr(const basic_shared_ptr<CBF, U>& r, T* aptr) noexcept {
+        if (!r) {
+            m.reset();
+            return;
+        }
         init_from_copy(cb_ptr_pair_type(r.m.cb, aptr));
     }
 
