@@ -23,8 +23,8 @@ protected:
     ~basic_enable_shared_from() = default;
 
     // don't touch m on copy
-    basic_enable_shared_from(const basic_enable_shared_from&) {}
-    basic_enable_shared_from& operator=(const basic_enable_shared_from&) {}
+    basic_enable_shared_from(const basic_enable_shared_from&) : m(nullptr) {}
+    basic_enable_shared_from& operator=(const basic_enable_shared_from&) { return *this; }
 
     sptr<void> shared_from_this() {
         if (!m.cb) return {};

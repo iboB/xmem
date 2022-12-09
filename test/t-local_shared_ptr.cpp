@@ -362,7 +362,7 @@ TEST_CASE("weak_ptr: alias") {
 
 class sf_type : public xmem::enable_local_shared_from {
 public:
-    int id;
+    int id = 0;
 
     using xmem::enable_local_shared_from::weak_from_this;
     using xmem::enable_local_shared_from::shared_from_this;
@@ -386,7 +386,55 @@ TEST_CASE("shared_from: basic") {
 
     {
         auto sfptr = xmem::make_local_shared<sf_type>();
-        auto sp = sfptr->shared_from_this();
-        CHECK(sp == sfptr);
+        sfptr->id = 3;
+        {
+            auto sp = sfptr->shared_from_this();
+            CHECK(sp == sfptr);
+            CHECK(sp.owner() == sfptr.owner());
+            CHECK(sp.use_count() == 2);
+        }
+        {
+            auto cpy = *sfptr;
+            CHECK(cpy.id == 3);
+            CHECK_FALSE(cpy.shared_from_this());
+            CHECK_FALSE(cpy.weak_from_this());
+        }
+        {
+            sf_type cpy;
+            CHECK(cpy.id == 0);
+            CHECK_FALSE(cpy.shared_from_this());
+            CHECK_FALSE(cpy.weak_from_this());
+            cpy = *sfptr;
+            CHECK(cpy.id == 3);
+            CHECK_FALSE(cpy.shared_from_this());
+            CHECK_FALSE(cpy.weak_from_this());
+        }
+        {
+            auto mve = std::move(*sfptr);
+            CHECK(mve.id == 3);
+            CHECK_FALSE(mve.shared_from_this());
+            CHECK_FALSE(mve.weak_from_this());
+            CHECK(sfptr->shared_from_this());
+            CHECK(sfptr->weak_from_this());
+        }
+        {
+            sf_type mve;
+            CHECK(mve.id == 0);
+            CHECK_FALSE(mve.shared_from_this());
+            CHECK_FALSE(mve.weak_from_this());
+            mve = std::move(*sfptr);
+            CHECK(mve.id == 3);
+            CHECK_FALSE(mve.shared_from_this());
+            CHECK_FALSE(mve.weak_from_this());
+        }
+
+        auto wp = sfptr->weak_from_this();
+        CHECK(wp);
+        CHECK(wp.owner() == sfptr.owner());
+        CHECK(wp.use_count() == 1);
+        CHECK(wp.lock() == sfptr->clone());
+
+        sfptr.reset();
+        CHECK(wp.expired());
     }
 }
