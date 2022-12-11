@@ -17,7 +17,7 @@ public:
     virtual void destroy_self() noexcept = 0;
 
     void inc_strong_ref() noexcept {
-        m_strong_refs.fetch_add(1, std::memory_order_acquire);
+        m_strong_refs.fetch_add(1, std::memory_order_relaxed);
     }
     void dec_strong_ref() noexcept {
         if (m_weak_refs.fetch_sub(1, std::memory_order_release) == 1) {
@@ -31,7 +31,7 @@ public:
     }
 
     void inc_weak_ref() noexcept {
-        m_weak_refs.fetch_add(1, std::memory_order_acquire);
+        m_weak_refs.fetch_add(1, std::memory_order_relaxed);
     }
     void dec_weak_ref() noexcept {
         if (m_weak_refs.fetch_sub(1, std::memory_order_release) == 1) {
@@ -40,7 +40,6 @@ public:
     }
 
     long strong_ref_count() const noexcept {
-        // don't impose guarantees here
         return long(m_strong_refs.load(std::memory_order_relaxed);
     }
 };
