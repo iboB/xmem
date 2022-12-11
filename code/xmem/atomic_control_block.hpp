@@ -20,7 +20,7 @@ public:
         m_strong_refs.fetch_add(1, std::memory_order_relaxed);
     }
     void dec_strong_ref() noexcept {
-        if (m_weak_refs.fetch_sub(1, std::memory_order_release) == 1) {
+        if (m_weak_refs.fetch_sub(1, std::memory_order_acq_rel) == 1) {
             destroy_resource();
             dec_weak_ref();
         }
@@ -34,7 +34,7 @@ public:
         m_weak_refs.fetch_add(1, std::memory_order_relaxed);
     }
     void dec_weak_ref() noexcept {
-        if (m_weak_refs.fetch_sub(1, std::memory_order_release) == 1) {
+        if (m_weak_refs.fetch_sub(1, std::memory_order_acq_rel) == 1) {
             destroy_self();
         }
     }
