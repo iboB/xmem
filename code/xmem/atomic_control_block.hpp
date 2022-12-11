@@ -26,8 +26,13 @@ public:
         }
     }
     uint32_t inc_strong_ref_nz() noexcept {
-        if (!m_strong_refs) return 0;
-        return ++m_strong_refs;
+        auto rc = m_strong_refs.load(std::memory_order_acquire);
+        while (rc != 0) {
+            if (m_strong_refs.compare_exchange_weak(rc, rc + 1, std::memory_order_acq_rel, std::memory_order_relaxed)) {
+                return rc + 1;
+            }
+        }
+        return 0;
     }
 
     void inc_weak_ref() noexcept {
