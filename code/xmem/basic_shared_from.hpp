@@ -47,7 +47,7 @@ protected:
     }
 
     template <typename T>
-    sptr<T> weak_from(T* ptr) const {
+    wptr<T> weak_from(T* ptr) const {
         if (!m.cb) return {};
         return wptr<T>(cb_ptr_pair<control_block_type, T>{m.cb, ptr});
     }
@@ -60,7 +60,7 @@ class basic_enable_shared_from_this : public basic_enable_shared_from<CBF> {
     using wptr = basic_weak_ptr<CBF, T>;
     template <typename T>
     using sptr = basic_shared_ptr<CBF, T>;
-protected:
+public:
     sptr<T> shared_from_this() {
         return this->shared_from(static_cast<T*>(this));
     }

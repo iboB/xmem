@@ -438,3 +438,28 @@ TEST_CASE("shared_from: basic") {
         CHECK(wp.expired());
     }
 }
+
+class sft_type : public xmem::enable_local_shared_from_this<sft_type> {
+public:
+    int id = 0;
+};
+
+TEST_CASE("shared_from_this: basic") {
+    auto ptr = xmem::make_local_shared<sft_type>();
+    ptr->id = 3;
+
+    {
+        auto clone = ptr->shared_from_this();
+        CHECK(clone->id == 3);
+        CHECK(clone == ptr);
+        CHECK(clone.use_count() == 2);
+
+        auto wc = ptr->weak_from_this();
+        CHECK(wc);
+        CHECK(wc.owner() == ptr.owner());
+        CHECK(wc.use_count() == 2);
+        CHECK(wc.lock()->id == 3);
+    }
+
+    xmem::local_shared_ptr<const sft_type> cptr = ptr;
+}
