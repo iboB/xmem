@@ -27,23 +27,23 @@ protected:
     basic_enable_shared_from& operator=(const basic_enable_shared_from&) { return *this; }
 
     sptr<void> shared_from_this() {
-        if (!m.cb) return {};
-        m.cb->inc_strong_ref();
-        return sptr<void>{m};
+        sptr<void> ret(m);
+        if (m.cb && m.cb->inc_strong_ref_nz(&ret)) return ret;
+        return {};
     }
     sptr<const void> shared_from_this() const {
-        if (!m.cb) return {};
-        m.cb->inc_strong_ref();
-        return sptr<const void>{m};
+        sptr<const void> ret(m);
+        if (m.cb && m.cb->inc_strong_ref_nz(&ret)) return ret;
+        return {};
     }
     wptr<void> weak_from_this() { return wptr<void>{m}; }
     wptr<const void> weak_from_this() const { return wptr<const void>{m}; }
 
     template <typename T>
     sptr<T> shared_from(T* ptr) const {
-        if (!m.cb) return {};
-        m.cb->inc_strong_ref();
-        return sptr<T>(cb_ptr_pair<control_block_type, T>{m.cb, ptr});
+        sptr<T> ret(cb_ptr_pair<control_block_type, T>{m.cb, ptr});
+        if (m.cb && m.cb->inc_strong_ref_nz(&ret)) return ret;
+        return {};
     }
 
     template <typename T>

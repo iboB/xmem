@@ -30,7 +30,7 @@ public:
         init_from_copy(r.m);
     }
     basic_shared_ptr& operator=(const basic_shared_ptr& r) noexcept {
-        if (m.cb) m.cb->dec_strong_ref();
+        if (m.cb) m.cb->dec_strong_ref(this);
         init_from_copy(r.m);
         return *this;
     }
@@ -41,7 +41,7 @@ public:
     }
     template <typename U>
     basic_shared_ptr& operator=(const basic_shared_ptr<CBF, U>& r) noexcept {
-        if (m.cb) m.cb->dec_strong_ref();
+        if (m.cb) m.cb->dec_strong_ref(this);
         init_from_copy(r.m);
         return *this;
     }
@@ -50,7 +50,7 @@ public:
         init_from_move(r);
     }
     basic_shared_ptr& operator=(basic_shared_ptr&& r) noexcept {
-        if (m.cb) m.cb->dec_strong_ref();
+        if (m.cb) m.cb->dec_strong_ref(this);
         init_from_move(r);
         return *this;
     }
@@ -61,7 +61,7 @@ public:
     }
     template <typename U>
     basic_shared_ptr& operator=(basic_shared_ptr<CBF, U>&& r) noexcept {
-        if (m.cb) m.cb->dec_strong_ref();
+        if (m.cb) m.cb->dec_strong_ref(this);
         init_from_move(r);
         return *this;
     }
@@ -73,7 +73,7 @@ public:
 
     template <typename U, typename D>
     basic_shared_ptr& operator=(unique_ptr<U, D>&& uptr) {
-        if (m.cb) m.cb->dec_strong_ref();
+        if (m.cb) m.cb->dec_strong_ref(this);
         m = CBF::make_uptr_cb(uptr);
         return *this;
     }
@@ -97,12 +97,12 @@ public:
     }
 
     ~basic_shared_ptr() {
-        if (m.cb) m.cb->dec_strong_ref();
+        if (m.cb) m.cb->dec_strong_ref(this);
     }
 
     void reset(std::nullptr_t = nullptr) noexcept {
         if (m.cb) {
-            m.cb->dec_strong_ref();
+            m.cb->dec_strong_ref(this);
             m.reset();
         }
     }
@@ -148,12 +148,13 @@ private:
     template <typename U>
     void init_from_copy(const cb_ptr_pair<control_block_type, U>& r) noexcept {
         m = r;
-        if (m.cb) m.cb->inc_strong_ref();
+        if (m.cb) m.cb->inc_strong_ref(this);
     }
 
     template <typename U>
     void init_from_move(basic_shared_ptr<CBF, U>& r) noexcept {
         m = std::move(r.m);
+        if (m.cb) m.cb->transfer_strong(this, &r);
     }
 
     cb_ptr_pair_type m;

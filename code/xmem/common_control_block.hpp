@@ -13,30 +13,33 @@ class control_block_base {
     RC m_strong;
     RC m_weak;
 public:
-    void inc_strong_ref() noexcept {
+    void inc_strong_ref(const void*) noexcept {
         m_strong.inc();
     }
-    void dec_strong_ref() noexcept {
+    void dec_strong_ref(const void* src) noexcept {
         if (m_strong.dec() == 0) {
             destroy_resource();
-            dec_weak_ref();
+            dec_weak_ref(src);
         }
     }
-    bool inc_strong_ref_nz() noexcept {
+    bool inc_strong_ref_nz(const void*) noexcept {
         return !!m_strong.inc_nz();
     }
     long strong_ref_count() const noexcept {
         return long(m_strong.count());
     }
+    void transfer_strong(const void*, const void*) {}
 
-    void inc_weak_ref() noexcept {
+    void inc_weak_ref(const void*) noexcept {
         m_weak.inc();
     }
-    void dec_weak_ref() noexcept {
+    void dec_weak_ref(const void*) noexcept {
         if (m_weak.dec() == 0) {
             destroy_self();
         }
     }
+    void transfer_weak(const void*, const void*) {}
+
 protected:
     virtual void destroy_resource() noexcept = 0;
     virtual void destroy_self() noexcept = 0;

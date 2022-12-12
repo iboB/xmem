@@ -42,7 +42,7 @@ public:
         init_from_move(r);
     }
     basic_weak_ptr& operator=(basic_weak_ptr&& r) noexcept {
-        if (m.cb) m.cb->dec_weak_ref();
+        if (m.cb) m.cb->dec_weak_ref(this);
         init_from_move(r);
         return *this;
     }
@@ -87,12 +87,12 @@ public:
     }
 
     ~basic_weak_ptr() {
-        if (m.cb) m.cb->dec_weak_ref();
+        if (m.cb) m.cb->dec_weak_ref(this);
     }
 
     void reset() noexcept {
         if (m.cb) {
-            m.cb->dec_weak_ref();
+            m.cb->dec_weak_ref(this);
             m.reset();
         }
     }
@@ -128,7 +128,7 @@ public:
         if (!m.cb) return {};
 
         basic_shared_ptr<CBF, T> ret;
-        if (!m.cb->inc_strong_ref_nz()) return {};
+        if (!m.cb->inc_strong_ref_nz(&ret)) return ret;
 
         ret.m = m;
         return ret;
@@ -138,12 +138,13 @@ private:
     template <typename U>
     void init_from_copy(const cb_ptr_pair<control_block_type, U>& r) noexcept {
         m = r;
-        if (m.cb) m.cb->inc_weak_ref();
+        if (m.cb) m.cb->inc_weak_ref(this);
     }
 
     template <typename U>
     void init_from_move(basic_weak_ptr<CBF, U>& r) noexcept {
         m = std::move(r.m);
+        if (m.cb) m.cb->transfer_weak(this, &r);
     }
 
     cb_ptr_pair_type m;
