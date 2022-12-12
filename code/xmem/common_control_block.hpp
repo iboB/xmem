@@ -13,6 +13,8 @@ class control_block_base {
     RC m_strong;
     RC m_weak;
 public:
+    void init_strong(const void*) noexcept {}
+
     void inc_strong_ref(const void*) noexcept {
         m_strong.inc();
     }

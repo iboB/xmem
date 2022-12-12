@@ -23,7 +23,6 @@ public:
     using cb_ptr_pair_type = cb_ptr_pair<control_block_type, element_type>;
 
     basic_shared_ptr() noexcept : m(nullptr) {}
-    explicit basic_shared_ptr(const cb_ptr_pair_type& cbptr) noexcept : m(cbptr) {}
     basic_shared_ptr(std::nullptr_t) noexcept : basic_shared_ptr() {};
 
     basic_shared_ptr(const basic_shared_ptr& r) noexcept {
@@ -67,14 +66,14 @@ public:
     }
 
     template <typename U, typename D>
-    basic_shared_ptr(unique_ptr<U, D>&& uptr)
-        : m(CBF::make_uptr_cb(uptr))
-    {}
+    basic_shared_ptr(unique_ptr<U, D>&& uptr) {
+        init_new(CBF::make_uptr_cb(uptr));
+    }
 
     template <typename U, typename D>
     basic_shared_ptr& operator=(unique_ptr<U, D>&& uptr) {
         if (m.cb) m.cb->dec_strong_ref(this);
-        m = CBF::make_uptr_cb(uptr);
+        init_new(CBF::make_uptr_cb(uptr));
         return *this;
     }
 
@@ -96,6 +95,10 @@ public:
         init_from_copy(cb_ptr_pair_type(r.m.cb, aptr));
     }
 
+    explicit basic_shared_ptr(cb_ptr_pair_type&& cbptr) noexcept {
+        init_new(std::move(cbptr));
+    }
+
     ~basic_shared_ptr() {
         if (m.cb) m.cb->dec_strong_ref(this);
     }
@@ -108,10 +111,14 @@ public:
     }
 
     template <typename U>
-    void reset(U* u);
+    void reset(U* u) {
+        operator=(unique_ptr<U>(u));
+    }
 
     template <typename U, typename D>
-    void reset(U* u, D d);
+    void reset(U* u, D d) {
+        operator=(unique_ptr<U>(u, std::move(d)));
+    }
 
     template <typename U, typename D, typename A>
     void reset(U* u, D d, A a);
@@ -145,6 +152,15 @@ public:
     }
 
 private:
+    // not new! rc taken care of from the outside
+    explicit basic_shared_ptr(const cb_ptr_pair_type& cbptr) noexcept : m(cbptr) {}
+
+    template <typename U>
+    void init_new(cb_ptr_pair<control_block_type, U>&& r) noexcept {
+        m = r;
+        if (m.cb) m.cb->init_strong(this);
+    }
+
     template <typename U>
     void init_from_copy(const cb_ptr_pair<control_block_type, U>& r) noexcept {
         m = r;
@@ -161,7 +177,7 @@ private:
 
     template <typename, typename> friend class basic_shared_ptr;
     template <typename, typename> friend class basic_weak_ptr;
-    template <typename> class basic_enable_shared_from;
+    template <typename> friend class basic_enable_shared_from;
 };
 
 // compare
