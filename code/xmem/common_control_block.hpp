@@ -61,11 +61,12 @@ public:
     explicit control_block_resource(Alloc&& a) : Alloc(std::move(a)) {}
     ~control_block_resource() {}
 
-    [[nodiscard]] static control_block_resource* create(Alloc a) {
+    using control_block_resource_ptr = unique_ptr<control_block_resource, void(*)(control_block_resource*)>;
+    [[nodiscard]] static control_block_resource_ptr create(Alloc a) {
         auto myalloc = get_self_alloc(a);
         auto self = myalloc.allocate(1);
         new (self) control_block_resource(std::move(a));
-        return self;
+        return control_block_resource_ptr(self, [](control_block_resource* ptr) { ptr->destroy_self(); });
     }
 
     [[nodiscard]] T* obj() {
@@ -91,7 +92,7 @@ struct control_block_factory {
     using sptr = basic_shared_ptr<control_block_factory, T>;
 
     template <typename T>
-    static pair<T> prepare_pair(cb_type* cb, T* ptr) {
+    static pair<T> prepare_pair(cb_type* cb, T* ptr) noexcept {
         using ebf_type = basic_enable_shared_from<control_block_factory>;
         if constexpr (std::is_base_of_v<ebf_type, T>) {
             ebf_type* ebf = ptr;
@@ -105,24 +106,27 @@ struct control_block_factory {
     [[nodiscard]] static pair<T> make_uptr_cb(unique_ptr<T, Del>& uptr, Alloc a = {}) {
         using uptr_type = unique_ptr<T, Del>;
         using rsrc_type = control_block_resource<cb_type, uptr_type, Alloc>;
-        auto cb = rsrc_type::create(std::move(a));
-        new (cb->obj()) uptr_type(std::move(uptr));
+        auto tmp = rsrc_type::create(std::move(a));
+        new (tmp->obj()) uptr_type(std::move(uptr));
+        auto cb = tmp.release();
         return prepare_pair(cb, cb->obj()->get());
     }
 
     template <typename T, typename Alloc, typename... Args>
     [[nodiscard]] static pair<T> make_resource_cb(Alloc a, Args&&... args) {
         using rsrc_type = control_block_resource<cb_type, T, Alloc>;
-        auto cb = rsrc_type::create(std::move(a));
-        new (cb->obj()) T(std::forward<Args>(args)...);
+        auto tmp = rsrc_type::create(std::move(a));
+        new (tmp->obj()) T(std::forward<Args>(args)...);
+        auto cb = tmp.release();
         return prepare_pair(cb, cb->obj());
     }
 
     template <typename T, typename Alloc>
     [[nodiscard]] static pair<T> make_resource_cb_for_overwrite(Alloc a) {
         using rsrc_type = control_block_resource<cb_type, T, Alloc>;
-        auto cb = rsrc_type::create(std::move(a));
-        new (cb->obj()) T;
+        auto tmp = rsrc_type::create(std::move(a));
+        new (tmp->obj()) T;
+        auto cb = tmp.release();
         return prepare_pair(cb, cb->obj());
     }
 };
