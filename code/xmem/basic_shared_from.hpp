@@ -56,10 +56,10 @@ protected:
 template <typename CBF, typename T>
 class basic_enable_shared_from_this : public basic_enable_shared_from<CBF> {
     using super = basic_enable_shared_from<CBF>;
-    template <typename T>
-    using wptr = basic_weak_ptr<CBF, T>;
-    template <typename T>
-    using sptr = basic_shared_ptr<CBF, T>;
+    template <typename PT>
+    using wptr = basic_weak_ptr<CBF, PT>;
+    template <typename PT>
+    using sptr = basic_shared_ptr<CBF, PT>;
 public:
     sptr<T> shared_from_this() {
         return this->shared_from(static_cast<T*>(this));
