@@ -41,7 +41,8 @@ protected:
 
     template <typename T>
     sptr<T> shared_from(T* ptr) const {
-        sptr<T> ret(cb_ptr_pair<control_block_type, T>{m.cb, ptr});
+        cb_ptr_pair<control_block_type, T> alias{m.cb, ptr};
+        sptr<T> ret{alias};
         if (m.cb && m.cb->inc_strong_ref_nz(&ret)) return ret;
         return {};
     }

@@ -124,7 +124,9 @@ public:
     void reset(U* u, D d, A a);
 
     void swap(basic_shared_ptr& r) noexcept {
+        if (m.cb) m.cb->transfer_strong(&r, this);
         m.swap(r.m);
+        if (m.cb) m.cb->transfer_strong(this, &r);
     }
 
     [[nodiscard]] element_type* get() const noexcept { return m.ptr; }
