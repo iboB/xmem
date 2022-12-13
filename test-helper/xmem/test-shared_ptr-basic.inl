@@ -247,6 +247,10 @@ TEST_CASE("shared_ptr: alias") {
     CHECK(i);
     CHECK(*i == 34);
     CHECK(i.use_count() == 0);
+    auto i3 = i;
+    CHECK(i3);
+    CHECK(*i3 == 34);
+    CHECK(i3.use_count() == 0);
     i.reset();
     CHECK_FALSE(i);
 
