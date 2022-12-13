@@ -100,10 +100,8 @@ public:
     }
 
     void reset(std::nullptr_t = nullptr) noexcept {
-        if (m.cb) {
-            m.cb->dec_strong_ref(this);
-            m.reset();
-        }
+        if (m.cb) m.cb->dec_strong_ref(this);
+        m.reset();
     }
 
     template <typename U>

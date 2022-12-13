@@ -236,6 +236,8 @@ TEST_CASE("shared_ptr: alias") {
     CHECK(i);
     CHECK(*i == 34);
     CHECK(i.use_count() == 0);
+    i.reset();
+    CHECK_FALSE(i);
 
 #if ENABLE_XMEM_SPECIFIC_CHECKS
     //i = m
