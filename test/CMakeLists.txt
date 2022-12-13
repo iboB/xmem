@@ -7,20 +7,25 @@ include(./get_cpm.cmake)
 
 CPMAddPackage(gh:iboB/doctest-util@0.0.5)
 
+find_package(Threads REQUIRED)
+
 macro(xmem_test test)
-    add_doctest_lib_test(${test} xmem ${ARGN} LIBRARIES xmem::test-helper)
+    add_doctest_lib_test(${test} xmem ${ARGN} LIBRARIES xmem::test-helper ${CMAKE_THREAD_LIBS_INIT})
 endmacro()
 
-xmem_test(unique_ptr t-unique_ptr.cpp)
 xmem_test(sanity_std_unique_ptr t-sanity_std_unique_ptr.cpp)
+xmem_test(unique_ptr t-unique_ptr.cpp)
 
 xmem_test(allocator t-allocator.cpp)
 xmem_test(allocator_std_compat t-allocator_std_compat.cpp)
 
-xmem_test(local_ref_count t-local_ref_count.cpp)
-xmem_test(local_shared_ptr t-local_shared_ptr.cpp)
 xmem_test(sanity_std_shared_ptr t-sanity_std_shared_ptr.cpp)
 
-xmem_test(atomic_ref_count t-atomic_ref_count.cpp)
+xmem_test(local_ref_count t-local_ref_count.cpp)
+xmem_test(local_shared_ptr t-local_shared_ptr.cpp)
 
 xmem_test(shared_ptr_bookkeeping t-shared_ptr_bookkeeping.cpp)
+
+xmem_test(atomic_ref_count t-atomic_ref_count.cpp)
+xmem_test(shared_ptr t-shared_ptr.cpp)
+
