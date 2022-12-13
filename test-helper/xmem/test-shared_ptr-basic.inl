@@ -223,6 +223,17 @@ TEST_CASE("shared_ptr: alias") {
 
     CHECK(i.use_count() == 3);
 
+#if ENABLE_XMEM_SPECIFIC_CHECKS
+    i2.reset();
+    CHECK_FALSE(i2);
+    i2 = test::make_aliased(c, &c->c);
+    CHECK(i2);
+#endif
+
+    CHECK(*i2 == 20);
+
+    CHECK(i.use_count() == 3);
+
     c.reset();
 
     CHECK(i2.use_count() == 2);
@@ -240,6 +251,7 @@ TEST_CASE("shared_ptr: alias") {
     CHECK_FALSE(i);
 
 #if ENABLE_XMEM_SPECIFIC_CHECKS
-    //i = m
+    i = test::make_aliased(c, &foo);
+    CHECK_FALSE(i);
 #endif
 }
