@@ -90,6 +90,7 @@ TEST_CASE("weak_ptr basic") {
     CHECK(stats.living == 0);
 }
 
+#if ENABLE_XMEM_SPECIFIC_CHECKS
 TEST_CASE("weak_ptr: alias") {
     auto c = test::make_test_shared<child>(10, 20);
 
@@ -120,8 +121,11 @@ TEST_CASE("weak_ptr: alias") {
     CHECK_FALSE(wcc);
     CHECK(wcc.expired());
 }
+#endif
 
 //////////////////////////////////////////////////////////
+
+#if ENABLE_XMEM_SPECIFIC_CHECKS
 
 class sf_type : public test::enable_test_shared_from {
 public:
@@ -202,6 +206,8 @@ TEST_CASE("shared_from: basic") {
     }
 }
 
+#endif
+
 class sft_type : public test::enable_test_shared_from_this<sft_type> {
 public:
     int id = 0;
@@ -218,8 +224,8 @@ TEST_CASE("shared_from_this: basic") {
         CHECK(clone.use_count() == 2);
 
         auto wc = ptr->weak_from_this();
-        CHECK(wc);
-        CHECK(wc.owner() == ptr.owner());
+        XMEM(CHECK(wc));
+        XMEM(CHECK(wc.owner() == ptr.owner()));
         CHECK(wc.use_count() == 2);
         CHECK(wc.lock()->id == 3);
     }

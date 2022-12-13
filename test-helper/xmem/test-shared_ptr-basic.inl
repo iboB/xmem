@@ -16,7 +16,7 @@ TEST_CASE("shared_ptr: basic") {
         CHECK_FALSE(e);
         CHECK_FALSE(e.get());
         CHECK(e.use_count() == 0);
-        CHECK_FALSE(e.owner());
+        XMEM(CHECK_FALSE(e.owner()));
         e.reset(); // should be safe
         e = nullptr;
         CHECK_FALSE(e);
@@ -28,7 +28,7 @@ TEST_CASE("shared_ptr: basic") {
         sptr o(new obj(44));
         CHECK(o);
         CHECK(o.use_count() == 1);
-        CHECK(o.owner());
+        XMEM(CHECK(o.owner()));
         CHECK(o.get());
         CHECK(o.get()->a == 44);
         CHECK(o->a == 44);
@@ -40,16 +40,16 @@ TEST_CASE("shared_ptr: basic") {
     {
         sptr o(new obj(11));
         auto p = o.get();
-        auto oo = o.owner();
-        CHECK(oo);
+        XMEM(auto oo = o.owner());
+        XMEM(CHECK(oo));
         sptr mo = std::move(o);
         CHECK_FALSE(o);
         CHECK(o.get() == 0);
         CHECK(o.use_count() == 0);
-        CHECK_FALSE(o.owner());
+        XMEM(CHECK_FALSE(o.owner()));
         CHECK(mo);
         CHECK(mo.get() == p);
-        CHECK(mo.owner() == oo);
+        XMEM(CHECK(mo.owner() == oo));
         CHECK(mo.use_count() == 1);
 
         CHECK(stats.living == 1);
@@ -64,16 +64,16 @@ TEST_CASE("shared_ptr: basic") {
         sptr o(new obj(53));
         CHECK(stats.living == 2);
 
-        CHECK(o.owner() != u.owner());
+        XMEM(CHECK(o.owner() != u.owner()));
 
         auto o2 = o;
         CHECK(o2.get() == o.get());
-        CHECK(o2.owner() == o.owner());
+        XMEM(CHECK(o2.owner() == o.owner()));
         CHECK(o2->a == 53);
         CHECK(o.use_count() == 2);
         auto o3 = o2;
         CHECK(o3.get() == o.get());
-        CHECK(o3.owner() == o.owner());
+        XMEM(CHECK(o3.owner() == o.owner()));
         CHECK(o3->a == 53);
         CHECK(o.use_count() == 3);
         CHECK(stats.living == 2);
@@ -230,8 +230,14 @@ TEST_CASE("shared_ptr: alias") {
     CHECK(*i == 10);
     CHECK(*i2 == 20);
 
-    // alias null should be safe
-    i = test::test_shared_ptr<int>(c, &c->a);
-    CHECK_FALSE(i);
+    // alias null should create a weird ptr which is not null, but has a zero ref count
+    int foo = 34;
+    i = test::test_shared_ptr<int>(c, &foo);
+    CHECK(i);
+    CHECK(*i == 34);
     CHECK(i.use_count() == 0);
+
+#if ENABLE_XMEM_SPECIFIC_CHECKS
+    //i = m
+#endif
 }
