@@ -15,7 +15,7 @@ TEST_CASE("[atomic_shared_ptr_storage] basic") {
         pi.store({});
         CHECK_FALSE(pi.load());
 
-        pi.store(test::make_shared<int>(15));
+        pi.store(test::make_test_shared<int>(15));
         {
             auto p = pi.load();
             CHECK(p);
@@ -28,14 +28,14 @@ TEST_CASE("[atomic_shared_ptr_storage] basic") {
     }
 
     {
-        auto ptr1 = test::make_shared<int>(11);
+        auto ptr1 = test::make_test_shared<int>(11);
         xtest::atomic_shared_ptr_storage<int> pi(ptr1);
-        auto ptr2 = test::make_shared<int>(32);
+        auto ptr2 = test::make_test_shared<int>(32);
         auto ret = pi.exchange(ptr2);
         CHECK(ret == ptr1);
         CHECK(pi.load() == ptr2);
 
-        auto ptr3 = test::make_shared<int>(99);
+        auto ptr3 = test::make_test_shared<int>(99);
         CHECK_FALSE(pi.compare_exchange(ptr1, ptr3));
         CHECK(ptr1 == ptr2);
         CHECK(pi.load() == ptr2);
@@ -49,7 +49,7 @@ TEST_CASE("[atomic_shared_ptr_storage] basic") {
         ret = pi.exchange({});
         CHECK_FALSE(ret);
 
-        test::shared_ptr<int> empty;
+        test::test_shared_ptr<int> empty;
         CHECK(pi.compare_exchange(empty, ptr1));
         CHECK_FALSE(empty);
         CHECK(pi.load() == ptr1);
@@ -66,13 +66,13 @@ TEST_CASE("[atomic_shared_ptr_storage] load/store") {
     std::atomic<bool> start{false};
     std::atomic<int> sum{0};
 
-    xtest::atomic_shared_ptr_storage<int> storage(test::make_shared<int>(10000));
+    xtest::atomic_shared_ptr_storage<int> storage(test::make_test_shared<int>(10000));
 
     std::thread a([&]() {
         while (!start);
         for (int i = 0; i < 50; ++i) {
             sum += *storage.load();
-            storage.store(test::make_shared<int>(i));
+            storage.store(test::make_test_shared<int>(i));
         }
     });
 
@@ -80,7 +80,7 @@ TEST_CASE("[atomic_shared_ptr_storage] load/store") {
         while (!start);
         for (int i = 0; i < 50; ++i) {
             sum += *storage.load();
-            storage.store(test::make_shared<int>(i * 10));
+            storage.store(test::make_test_shared<int>(i * 10));
         }
     });
 
@@ -98,11 +98,11 @@ TEST_CASE("[atomic_shared_ptr_storage] exchange") {
     std::atomic<bool> start{false};
     std::atomic<int> sum{0};
 
-    auto init = test::make_shared<int>(-1);
+    auto init = test::make_test_shared<int>(-1);
     xtest::atomic_shared_ptr_storage<int> storage(init);
 
-    auto a = test::make_shared<int>(1);
-    auto b = test::make_shared<int>(2);
+    auto a = test::make_test_shared<int>(1);
+    auto b = test::make_test_shared<int>(2);
 
     std::thread ta([&]() {
         while (!start);

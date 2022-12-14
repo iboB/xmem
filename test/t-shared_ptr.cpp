@@ -6,7 +6,6 @@
 #include <xmem/test_init.inl>
 
 #include <xmem/shared_ptr.hpp>
-#include <xmem/atomic_shared_ptr_storage.hpp>
 #include <doctest/doctest.h>
 TEST_SUITE_BEGIN("shared_ptr");
 

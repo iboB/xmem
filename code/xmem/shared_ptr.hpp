@@ -4,6 +4,7 @@
 #pragma once
 #include "common_control_block.hpp"
 #include "atomic_ref_count.hpp"
+#include "basic_atomic_shared_ptr_storage.hpp"
 
 namespace xmem {
 
@@ -35,5 +36,8 @@ template <typename T>
 [[nodiscard]] shared_ptr<T> make_shared_for_overwrite() {
     return shared_ptr<T>(atomic_control_block_factory::make_resource_cb_for_overwrite<T>(allocator<char>{}));
 }
+
+template <typename T>
+using atomic_shared_ptr_storage = basic_atomic_shared_ptr_storage<atomic_control_block_factory, T>;
 
 }

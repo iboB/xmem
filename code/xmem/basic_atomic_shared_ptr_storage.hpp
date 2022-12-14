@@ -3,22 +3,22 @@
 //
 #pragma once
 #include "bits/spinlock.hpp"
-#include "shared_ptr.hpp"
+#include "basic_shared_ptr.hpp"
 
 namespace xmem {
 
-template <typename T>
-class alignas(impl::cache_line_size) atomic_shared_ptr_storage {
-    shared_ptr<T> m_ptr;
+template <typename CBF, typename T>
+class alignas(impl::cache_line_size) basic_atomic_shared_ptr_storage {
+    basic_shared_ptr<CBF, T> m_ptr;
     mutable impl::spinlock m_spinlock;
 public:
-    using shared_pointer_type = shared_ptr<T>;
+    using shared_pointer_type = basic_shared_ptr<CBF, T>;
 
-    atomic_shared_ptr_storage() noexcept = default;
-    atomic_shared_ptr_storage(shared_pointer_type ptr) noexcept : m_ptr(std::move(ptr)) {}
+    basic_atomic_shared_ptr_storage() noexcept = default;
+    basic_atomic_shared_ptr_storage(shared_pointer_type ptr) noexcept : m_ptr(std::move(ptr)) {}
 
-    atomic_shared_ptr_storage(const atomic_shared_ptr_storage&) = delete;
-    atomic_shared_ptr_storage& operator=(const atomic_shared_ptr_storage&) = delete;
+    basic_atomic_shared_ptr_storage(const basic_atomic_shared_ptr_storage&) = delete;
+    basic_atomic_shared_ptr_storage& operator=(const basic_atomic_shared_ptr_storage&) = delete;
 
     shared_pointer_type load() const noexcept {
         impl::spinlock::lock_guard _l(m_spinlock);
