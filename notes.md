@@ -1,9 +1,9 @@
 ## TODO
 
-* atomic ref count
 * tracking demo
 * allocator-based tests of `shared_ptr`
 * allocate_unique
+* wrappers for the standard `<memory>` types
 
 ## Differences
 
@@ -13,6 +13,7 @@
     * No ctor from weak_ptr
     * make_aliased
     * make_ptr
+    * no atomic ops
 * `std::weak_ptr`
     * Custom owner
     * Getter for owner
@@ -20,6 +21,7 @@
     * aliasing ctor
 * `shared_from`
 * `shared_from_this` - no exception
+* `atomic_shared_ptr_storage`
 * no exceptions as a whole
 * C++20 features
 
