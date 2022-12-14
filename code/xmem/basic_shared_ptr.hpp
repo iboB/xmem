@@ -141,6 +141,7 @@ public:
     explicit operator bool() const noexcept { return !!m.ptr; }
 
     [[nodiscard]] const void* owner() const noexcept { return m.cb; }
+    [[nodiscard]] const control_block_type* t_owner() const noexcept { return m.cb; }
 
     template <typename UCBF, typename U>
     [[nodiscard]] bool owner_before(const basic_shared_ptr<UCBF, U>& r) const noexcept {

@@ -68,6 +68,7 @@ TEST_CASE("shared_ptr: basic") {
         CHECK(stats.living == 2);
 
         XMEM(CHECK(o.owner() != u.owner()));
+        XMEM(CHECK(o.t_owner() != u.t_owner()));
         CHECK_FALSE(xtest::same_owner(o, u));
 
         auto o2 = o;
@@ -244,6 +245,7 @@ TEST_CASE("shared_ptr: alias") {
     auto i2 = test::test_shared_ptr<int>(c, &c->c);
     CHECK(i2.get() == &c->c);
     XMEM(CHECK(i2.owner() == i.owner()));
+    XMEM(CHECK(i2.t_owner() == i.t_owner()));
     CHECK(xtest::same_owner(i2, i));
 
     CHECK(i.use_count() == 3);

@@ -17,6 +17,7 @@ TEST_CASE("weak_ptr basic") {
         wptr e;
         XMEM(CHECK_FALSE(e));
         XMEM(CHECK_FALSE(e.owner()));
+        XMEM(CHECK_FALSE(e.t_owner()));
         CHECK(xtest::no_owner(e));
         CHECK(e.use_count() == 0);
         CHECK(e.expired());
@@ -259,6 +260,7 @@ TEST_CASE("shared_from_this: basic") {
         auto wc = ptr->weak_from_this();
         XMEM(CHECK(wc));
         XMEM(CHECK(wc.owner() == ptr.owner()));
+        XMEM(CHECK(wc.t_owner() == ptr.t_owner()));
         CHECK(xtest::same_owner(wc, ptr));
         CHECK(wc.use_count() == 2);
         CHECK(wc.lock()->id == 3);
