@@ -3,13 +3,12 @@
 //
 #pragma once
 #include "bits/spinlock.hpp"
-
-#include <new>
+#include "shared_ptr.hpp"
 
 namespace xmem {
 
 template <typename T>
-class alignas(std::hardware_destructive_interference_size) atomic_shared_ptr_storage {
+class alignas(impl::cache_line_size) atomic_shared_ptr_storage {
     shared_ptr<T> m_ptr;
     mutable impl::spinlock m_spinlock;
 public:

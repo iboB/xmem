@@ -27,6 +27,14 @@ struct cnt_deleter {
 namespace XMEM_TEST_NAMESPACE {}
 namespace test = XMEM_TEST_NAMESPACE;
 
+#if defined(XMEM_XSTD_NAMESPACE)
+namespace XMEM_XSTD_NAMESPACE {}
+namespace xtest = XMEM_XSTD_NAMESPACE;
+#else
+namespace xtest = test;
+#endif
+
+
 #if !defined(ENABLE_XMEM_SPECIFIC_CHECKS)
 #   error "ENABLE_XMEM_SPECIFIC_CHECKS is not defined"
 #endif

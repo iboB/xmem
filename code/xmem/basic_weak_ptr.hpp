@@ -150,4 +150,21 @@ private:
     cb_ptr_pair_type m;
 };
 
+template <typename CBF, typename T>
+[[nodiscard]] bool no_owner(const xmem::basic_weak_ptr<CBF, T>& ptr) { return !ptr.owner(); }
+
+template <typename CBF, typename T1, typename T2>
+[[nodiscard]] bool same_owner(const xmem::basic_weak_ptr<CBF, T1>& s1, const xmem::basic_weak_ptr<CBF, T2>& s2) {
+    return s1.owner() == s2.owner();
+}
+template <typename CBF, typename T1, typename T2>
+[[nodiscard]] bool same_owner(const xmem::basic_shared_ptr<CBF, T1>& s1, const xmem::basic_weak_ptr<CBF, T2>& s2) {
+    return s1.owner() == s2.owner();
+}
+template <typename CBF, typename T1, typename T2>
+[[nodiscard]] bool same_owner(const xmem::basic_weak_ptr<CBF, T1>& s1, const xmem::basic_shared_ptr<CBF, T2>& s2) {
+    return s1.owner() == s2.owner();
+}
+
+
 } // namespace xmem

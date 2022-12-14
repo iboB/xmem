@@ -7,13 +7,84 @@
 #include <memory>
 #include <atomic>
 
-namespace xmem::xstd {
+namespace xstd {
+
+template <typename T>
+auto make_shared_ptr(T&& t) -> std::shared_ptr<typename std::remove_reference<T>::type>
+{
+    return std::make_shared<typename std::remove_reference<T>::type>(std::forward<T>(t));
+}
+
+template <typename T>
+auto make_unique_ptr(T&& t) -> std::unique_ptr<typename std::remove_reference<T>::type>
+{
+    using RRT = typename std::remove_reference<T>::type;
+    return  std::unique_ptr<RRT>(new RRT(std::forward<T>(t)));
+}
 
 template <typename U, typename T>
 std::shared_ptr<T> make_aliased(const std::shared_ptr<U>& owner, T* ptr) {
     if (owner.use_count() == 0) return {};
     return std::shared_ptr<T>(owner, ptr);
 }
+
+template <typename T, typename U>
+bool same_owner(const std::shared_ptr<T>& a, const std::shared_ptr<U>& b) {
+    return !a.owner_before(b) && !b.owner_before(a);
+}
+template <typename T, typename U>
+bool same_owner(const std::weak_ptr<T>& a, const std::weak_ptr<U>& b) {
+    return !a.owner_before(b) && !b.owner_before(a);
+}
+template <typename T, typename U>
+bool same_owner(const std::weak_ptr<T>& a, const std::shared_ptr<U>& b) {
+    return !a.owner_before(b) && !b.owner_before(a);
+}
+template <typename T, typename U>
+bool same_owner(const std::shared_ptr<T>& a, const std::weak_ptr<U>& b) {
+    return !a.owner_before(b) && !b.owner_before(a);
+}
+
+template <typename T>
+bool no_owner(const std::shared_ptr<T>& ptr) {
+    std::shared_ptr<T> e;
+    return same_owner(ptr, e);
+}
+template <typename T>
+bool no_owner(const std::weak_ptr<T>& ptr) {
+    std::weak_ptr<T> e;
+    return same_owner(ptr, e);
+}
+
+class enable_shared_from : public std::enable_shared_from_this<enable_shared_from>
+{
+    using esd = std::enable_shared_from_this<enable_shared_from>;
+protected:
+    std::shared_ptr<void> shared_from_this() { return esd::shared_from_this(); }
+    std::shared_ptr<const void> shared_from_this() const { return esd::shared_from_this(); }
+
+    std::weak_ptr<void> weak_from_this()
+    {
+        return esd::weak_from_this();
+    }
+
+    std::weak_ptr<const void> weak_from_this() const
+    {
+        return esd::weak_from_this();
+    }
+
+    template <typename T>
+    std::shared_ptr<T> shared_from(T* ptr) const {
+        return std::shared_ptr<T>(shared_from_this(), ptr);
+    }
+
+    template <typename T>
+    std::weak_ptr<T> weak_from(T* ptr) const {
+        // c++ doesn't have an aliasing weak_ptr
+        return shared_from(ptr);
+    }
+};
+
 
 namespace impl {
 #if __cplusplus >= 202000L && defined(__cpp_lib_atomic_shared_ptr)
@@ -65,7 +136,7 @@ public:
 }
 
 template <typename T>
-class atomic_shared_ptr_storage {
+class alignas(xmem::impl::cache_line_size) atomic_shared_ptr_storage {
     impl::asps_holder<T> m_holder;
 public:
     using shared_pointer_type = std::shared_ptr<T>;

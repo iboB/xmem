@@ -17,6 +17,7 @@ TEST_CASE("weak_ptr basic") {
         wptr e;
         XMEM(CHECK_FALSE(e));
         XMEM(CHECK_FALSE(e.owner()));
+        CHECK(xtest::no_owner(e));
         CHECK(e.use_count() == 0);
         CHECK(e.expired());
         CHECK_FALSE(e.lock());
@@ -24,6 +25,7 @@ TEST_CASE("weak_ptr basic") {
         wptr e2 = e;
         XMEM(CHECK_FALSE(e2));
         XMEM(CHECK_FALSE(e2.owner()));
+        CHECK(xtest::no_owner(e));
         CHECK(e2.use_count() == 0);
         CHECK(e2.expired());
         CHECK_FALSE(e2.lock());
@@ -36,6 +38,7 @@ TEST_CASE("weak_ptr basic") {
         wptr we = se;
         XMEM(CHECK_FALSE(we));
         XMEM(CHECK_FALSE(we.owner()));
+        CHECK(xtest::no_owner(we));
         CHECK(we.use_count() == 0);
         CHECK(se.use_count() == 0);
         CHECK_FALSE(we.lock());
@@ -51,8 +54,10 @@ TEST_CASE("weak_ptr basic") {
         CHECK(se.use_count() == 1);
         XMEM(CHECK(w));
         XMEM(CHECK(w.owner() == se.owner()));
+        CHECK(xtest::same_owner(w, se));
         wptr w2 = w;
         XMEM(CHECK(w2.owner() == se.owner()));
+        CHECK(xtest::same_owner(w2, se));
         CHECK(w2.lock() == se);
         sptr se2 = se;
         CHECK(w.use_count() == 2);
@@ -65,14 +70,17 @@ TEST_CASE("weak_ptr basic") {
         CHECK(w.expired());
         XMEM(CHECK(w));
         XMEM(CHECK(w.owner()));
+        CHECK_FALSE(xtest::no_owner(w));
 
         w.reset();
         XMEM(CHECK_FALSE(w));
         XMEM(CHECK_FALSE(w.owner()));
+        CHECK(xtest::no_owner(w));
 
         CHECK_FALSE(w2.lock());
         XMEM(CHECK(w2));
         XMEM(CHECK(w2.owner()));
+        CHECK_FALSE(xtest::no_owner(w2));
     }
 
     {
@@ -125,19 +133,44 @@ TEST_CASE("weak_ptr: alias") {
 
 //////////////////////////////////////////////////////////
 
-#if ENABLE_XMEM_SPECIFIC_CHECKS
-
-class sf_type : public test::enable_test_shared_from {
+class sf_type : public xtest::enable_test_shared_from {
 public:
     int id = 0;
 
-    using test::enable_test_shared_from::weak_from_this;
-    using test::enable_test_shared_from::shared_from_this;
+    using xtest::enable_test_shared_from::weak_from_this;
+    using xtest::enable_test_shared_from::shared_from_this;
+
+    using xtest::enable_test_shared_from::shared_from;
+    using xtest::enable_test_shared_from::weak_from;
 
     test::test_shared_ptr<sf_type> clone() {
         return shared_from(this);
     }
 };
+
+TEST_CASE("shared_from: basic common") {
+    auto ptr = test::make_test_shared<sf_type>();
+    ptr->id = 10;
+
+    CHECK(ptr == ptr->clone());
+
+    {
+        auto idptr = ptr->shared_from(&ptr->id);
+        CHECK(xtest::same_owner(ptr, idptr));
+        CHECK(*idptr == 10);
+        CHECK(idptr.use_count() == 2);
+    }
+
+    {
+        auto idptr = ptr->weak_from(&ptr->id);
+        CHECK(idptr.use_count() == 1);
+        CHECK(*idptr.lock() == 10);
+        ptr.reset();
+        CHECK(idptr.expired());
+    }
+}
+
+#if ENABLE_XMEM_SPECIFIC_CHECKS
 
 TEST_CASE("shared_from: basic") {
     {
@@ -226,6 +259,7 @@ TEST_CASE("shared_from_this: basic") {
         auto wc = ptr->weak_from_this();
         XMEM(CHECK(wc));
         XMEM(CHECK(wc.owner() == ptr.owner()));
+        CHECK(xtest::same_owner(wc, ptr));
         CHECK(wc.use_count() == 2);
         CHECK(wc.lock()->id == 3);
     }

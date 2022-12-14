@@ -21,3 +21,5 @@ struct child : obj {
 
 struct alignas(64) avx_512 { double d[8]; };
 
+struct vec { int x; int y; };
+

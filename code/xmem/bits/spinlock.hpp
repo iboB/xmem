@@ -3,6 +3,7 @@
 //
 #pragma once
 #include <atomic>
+#include <new>
 
 namespace xmem::impl {
 
@@ -22,5 +23,13 @@ struct spinlock {
         spinlock& m_sl;
     };
 };
+
+inline constexpr size_t cache_line_size =
+#if defined(__cpp_lib_hardware_interference_size)
+    std::hardware_destructive_interference_size
+#else
+    64
+#endif
+;
 
 }

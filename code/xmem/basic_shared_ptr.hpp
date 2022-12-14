@@ -190,6 +190,14 @@ template <typename CBF1, typename T1, typename CBF2, typename T2>
 template <typename CBF1, typename T1, typename CBF2, typename T2>
 [[nodiscard]] bool operator>=(const xmem::basic_shared_ptr<CBF1, T1>& s1, const xmem::basic_shared_ptr<CBF2, T2>& s2) { return s1.get() >= s2.get(); }
 
+template <typename CBF, typename T>
+[[nodiscard]] bool no_owner(const xmem::basic_shared_ptr<CBF, T>& ptr) { return !ptr.owner(); }
+
+template <typename CBF, typename T1, typename T2>
+[[nodiscard]] bool same_owner(const xmem::basic_shared_ptr<CBF, T1>& s1, const xmem::basic_shared_ptr<CBF, T2>& s2) {
+    return s1.owner() == s2.owner();
+}
+
 template <typename CBF, typename U, typename T>
 basic_shared_ptr<CBF, T> make_aliased(const basic_shared_ptr<CBF, U>& owner, T* ptr) {
     if (owner.use_count() == 0) return {};

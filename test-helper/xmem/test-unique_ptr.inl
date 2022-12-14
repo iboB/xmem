@@ -169,19 +169,19 @@ STD20(TEST_CASE("make_unique_for_overwrite") {
     CHECK(op->a == 11);
 })
 
-XMEM(TEST_CASE("make_unique_ptr") {
+TEST_CASE("make_unique_ptr") {
     std::vector<int> vec = {1, 2, 3};
-    auto copy = test::make_unique_ptr(vec);
+    auto copy = xtest::make_unique_ptr(vec);
     CHECK(copy->size() == 3);
     CHECK(vec.size() == 3);
     CHECK(vec.data() != copy->data());
     copy->at(1) = 5;
     CHECK(*copy == std::vector<int>({1, 5, 3}));
     auto vdata = vec.data();
-    auto heist = test::make_unique_ptr(std::move(vec));
+    auto heist = xtest::make_unique_ptr(std::move(vec));
     CHECK(heist->size() == 3);
     CHECK(heist->data() == vdata);
-})
+}
 
 TEST_CASE("deleter") {
     using optr = test::unique_ptr<obj, cnt_deleter>;

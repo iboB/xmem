@@ -17,6 +17,7 @@ TEST_CASE("shared_ptr: basic") {
         CHECK_FALSE(e.get());
         CHECK(e.use_count() == 0);
         XMEM(CHECK_FALSE(e.owner()));
+        CHECK(xtest::no_owner(e));
         e.reset(); // should be safe
         e = nullptr;
         CHECK_FALSE(e);
@@ -29,6 +30,7 @@ TEST_CASE("shared_ptr: basic") {
         CHECK(o);
         CHECK(o.use_count() == 1);
         XMEM(CHECK(o.owner()));
+        CHECK_FALSE(xtest::no_owner(o));
         CHECK(o.get());
         CHECK(o.get()->a == 44);
         CHECK(o->a == 44);
@@ -47,6 +49,7 @@ TEST_CASE("shared_ptr: basic") {
         CHECK(o.get() == 0);
         CHECK(o.use_count() == 0);
         XMEM(CHECK_FALSE(o.owner()));
+        CHECK(xtest::no_owner(o));
         CHECK(mo);
         CHECK(mo.get() == p);
         XMEM(CHECK(mo.owner() == oo));
@@ -65,15 +68,18 @@ TEST_CASE("shared_ptr: basic") {
         CHECK(stats.living == 2);
 
         XMEM(CHECK(o.owner() != u.owner()));
+        CHECK_FALSE(xtest::same_owner(o, u));
 
         auto o2 = o;
         CHECK(o2.get() == o.get());
         XMEM(CHECK(o2.owner() == o.owner()));
+        CHECK(xtest::same_owner(o2, o));
         CHECK(o2->a == 53);
         CHECK(o.use_count() == 2);
         auto o3 = o2;
         CHECK(o3.get() == o.get());
         XMEM(CHECK(o3.owner() == o.owner()));
+        CHECK(xtest::same_owner(o3, o));
         CHECK(o3->a == 53);
         CHECK(o.use_count() == 3);
         CHECK(stats.living == 2);
@@ -167,19 +173,19 @@ STD20(TEST_CASE("make_shared_for_overwrite") {
     CHECK(op->a == 11);
 })
 
-XMEM(TEST_CASE("make_shared_ptr") {
+TEST_CASE("make_shared_ptr") {
     std::vector<int> vec = {1, 2, 3};
-    auto copy = test::make_test_shared_ptr(vec);
+    auto copy = xtest::make_test_shared_ptr(vec);
     CHECK(copy->size() == 3);
     CHECK(vec.size() == 3);
     CHECK(vec.data() != copy->data());
     copy->at(1) = 5;
     CHECK(*copy == std::vector<int>({1, 5, 3}));
     auto vdata = vec.data();
-    auto heist = test::make_test_shared_ptr(std::move(vec));
+    auto heist = xtest::make_test_shared_ptr(std::move(vec));
     CHECK(heist->size() == 3);
     CHECK(heist->data() == vdata);
-})
+}
 
 TEST_CASE("shared_ptr: cast and type erasure") {
     obj::lifetime_stats stats;
@@ -209,26 +215,43 @@ TEST_CASE("shared_ptr: cast and type erasure") {
 }
 
 TEST_CASE("shared_ptr: alias") {
-    obj::lifetime_stats stats;
+
+    // make-aliased non-null
+    {
+        auto ptr = xtest::make_test_shared_ptr(vec{1, 2});
+        auto alias = xtest::make_aliased(ptr, &ptr->y);
+        CHECK(alias);
+        CHECK(*alias == 2);
+        CHECK(alias.use_count() == 2);
+    }
+
+    // make-aliased null
+    {
+        test::test_shared_ptr<vec> ptr;
+        auto alias = xtest::make_aliased(ptr, &ptr->y);
+        CHECK_FALSE(alias);
+        CHECK(alias.use_count() == 0);
+    }
+
 
     auto c = test::make_test_shared<child>(10, 20);
 
     auto i = test::test_shared_ptr<int>(c, &c->a);
     CHECK(i.get() == &c->a);
     XMEM(CHECK(i.owner() == c.owner()));
+    CHECK(xtest::same_owner(i, c));
 
     auto i2 = test::test_shared_ptr<int>(c, &c->c);
     CHECK(i2.get() == &c->c);
     XMEM(CHECK(i2.owner() == i.owner()));
+    CHECK(xtest::same_owner(i2, i));
 
     CHECK(i.use_count() == 3);
 
-#if ENABLE_XMEM_SPECIFIC_CHECKS
     i2.reset();
     CHECK_FALSE(i2);
-    i2 = test::make_aliased(c, &c->c);
+    i2 = xtest::make_aliased(c, &c->c);
     CHECK(i2);
-#endif
 
     CHECK(*i2 == 20);
 
@@ -254,8 +277,6 @@ TEST_CASE("shared_ptr: alias") {
     i.reset();
     CHECK_FALSE(i);
 
-#if ENABLE_XMEM_SPECIFIC_CHECKS
-    i = test::make_aliased(c, &foo);
+    i = xtest::make_aliased(c, &foo);
     CHECK_FALSE(i);
-#endif
 }
