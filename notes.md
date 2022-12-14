@@ -1,9 +1,10 @@
 ## TODO
 
+* `swap` test for `weak_ptr`
 * tracking demo
 * allocator-based tests of `shared_ptr`
 * allocate_unique
-* wrappers for the standard `<memory>` types
+
 
 ## Differences
 
