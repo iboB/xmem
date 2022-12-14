@@ -6,6 +6,7 @@
 #include <xmem/test_init.inl>
 
 #include <xmem/shared_ptr.hpp>
+#include <xmem/atomic_shared_ptr_storage.hpp>
 #include <doctest/doctest.h>
 TEST_SUITE_BEGIN("shared_ptr");
 
@@ -21,3 +22,5 @@ TEST_SUITE_BEGIN("shared_ptr");
 #define enable_test_shared_from_this enable_shared_from_this
 
 #include <xmem/test-weak_ptr-shared_from-basic.inl>
+
+#include <xmem/test-shared_ptr-atomic.inl>
