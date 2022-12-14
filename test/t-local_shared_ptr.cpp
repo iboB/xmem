@@ -14,11 +14,11 @@ TEST_SUITE_BEGIN("local_shared_ptr");
 #define make_test_shared_ptr make_local_shared_ptr
 #define make_test_shared_for_overwrite make_local_shared_for_overwrite
 
-#include <xmem/test-shared_ptr-basic.inl>
+#include <xmem/test-shared_ptr-local.inl>
 
 #define test_weak_ptr local_weak_ptr
 #define enable_test_shared_from enable_local_shared_from
 #define enable_test_shared_from_this enable_local_shared_from_this
 
-#include <xmem/test-weak_ptr-shared_from-basic.inl>
+#include <xmem/test-weak_ptr-shared_from-local.inl>
 
