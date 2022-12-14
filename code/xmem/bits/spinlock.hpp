@@ -1,0 +1,26 @@
+// Copyright (c) Borislav Stanimirov
+// SPDX-License-Identifier: MIT
+//
+#pragma once
+#include <atomic>
+
+namespace xmem::impl {
+
+struct spinlock {
+    std::atomic_flag flag = ATOMIC_FLAG_INIT;
+    void lock() noexcept {
+        while (flag.test_and_set(std::memory_order_acquire)) /* spin */;
+    }
+    void unlock() noexcept {
+        flag.clear(std::memory_order_release);
+    }
+
+    struct lock_guard {
+        lock_guard(spinlock& sl) noexcept : m_sl(sl) { m_sl.lock(); }
+        ~lock_guard() { m_sl.unlock(); }
+    private:
+        spinlock& m_sl;
+    };
+};
+
+}
