@@ -29,6 +29,7 @@ public:
         init_from_copy(r.m);
     }
     basic_shared_ptr& operator=(const basic_shared_ptr& r) noexcept {
+        if (&r == this) return *this; // self usurp
         if (m.cb) m.cb->dec_strong_ref(this);
         init_from_copy(r.m);
         return *this;
@@ -49,6 +50,7 @@ public:
         init_from_move(r);
     }
     basic_shared_ptr& operator=(basic_shared_ptr&& r) noexcept {
+        if (&r == this) return *this; // self usurp
         if (m.cb) m.cb->dec_strong_ref(this);
         init_from_move(r);
         return *this;
@@ -118,9 +120,16 @@ public:
     void reset(U* u, D d, A a);
 
     void swap(basic_shared_ptr& r) noexcept {
-        if (m.cb) m.cb->transfer_strong(&r, this);
-        m.swap(r.m);
-        if (m.cb) m.cb->transfer_strong(this, &r);
+        // a self usurp check wouldn't be needed here in a conventional implementation,
+        // but we want to make sane transfer_strong calls
+        if (m.cb != r.m.cb) {
+            if (m.cb) m.cb->transfer_strong(&r, this);
+            m.swap(r.m);
+            if (m.cb) m.cb->transfer_strong(this, &r);
+        }
+        else {
+            std::swap(m.ptr, r.m.ptr);
+        }
     }
 
     [[nodiscard]] element_type* get() const noexcept { return m.ptr; }

@@ -6,7 +6,7 @@
 
 #include <thread>
 
-TEST_CASE("[atomic_shared_ptr_storage] basic") {
+TEST_CASE("atomic_shared_ptr_storage: basic") {
     static_assert(sizeof(xtest::atomic_shared_ptr_storage<int>) <= 64, "We want true sharing here");
 
     {
@@ -56,10 +56,14 @@ TEST_CASE("[atomic_shared_ptr_storage] basic") {
 
         ret = pi.exchange(ptr1);
         CHECK(ret == ptr1);
+        CHECK(ptr1 == ptr2);
+        CHECK(ptr1.use_count() == 4);
+
+        CHECK(ptr3.use_count() == 1);
     }
 }
 
-TEST_CASE("[atomic_shared_ptr_storage] load/store") {
+TEST_CASE("atomic_shared_ptr_storage: load/store") {
     // no sensible checks here
     // just confirm that there are no crashes and no sanitizer complaints
 
@@ -88,10 +92,11 @@ TEST_CASE("[atomic_shared_ptr_storage] load/store") {
     a.join();
     b.join();
 
+    CHECK(storage.load().use_count() == 2);
     CHECK(sum > 10000);
 }
 
-TEST_CASE("[atomic_shared_ptr_storage] exchange") {
+TEST_CASE("atomic_shared_ptr_storage: exchange") {
     // no sensible checks here as well
     // just confirm that there are no crashes and no sanitizer complaints
 
@@ -133,7 +138,16 @@ TEST_CASE("[atomic_shared_ptr_storage] exchange") {
 
     // if thread b completed all of its iterations before a managed to do one,
     // we will end up with 100% fail rate in b and a stored in storage
-    sum += storage.compare_exchange(a, b);
+    {
+        auto ac = a;
+        sum += storage.compare_exchange(ac, b);
+    }
 
     CHECK(sum >= 2);
+
+    storage.exchange({});
+    CHECK_FALSE(storage.load());
+
+    CHECK(a.use_count() == 1);
+    CHECK(b.use_count() == 1);
 }

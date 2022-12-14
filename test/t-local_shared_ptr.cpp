@@ -21,4 +21,3 @@ TEST_SUITE_BEGIN("local_shared_ptr");
 #define enable_test_shared_from_this enable_local_shared_from_this
 
 #include <xmem/test-weak_ptr-shared_from-local.inl>
-

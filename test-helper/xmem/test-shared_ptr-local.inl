@@ -139,6 +139,12 @@ TEST_CASE("shared_ptr: compare/swap") {
     CHECK(p0.get() == vals + 1);
     CHECK(p1.get() == vals + 0);
     CHECK(p1 < p0);
+
+    siptr e1;
+    siptr e2;
+    e1.swap(e2);
+    CHECK_FALSE(e1);
+    CHECK_FALSE(e2);
 }
 
 TEST_CASE("make_shared") {
@@ -281,4 +287,103 @@ TEST_CASE("shared_ptr: alias") {
 
     i = xtest::make_aliased(c, &foo);
     CHECK_FALSE(i);
+}
+
+TEST_CASE("shared_ptr: self usurp") {
+    obj::lifetime_stats stats;
+    doctest::util::lifetime_counter_sentry _ls(stats);
+
+    // self usurp
+    {
+        auto ptr = test::make_test_shared<obj>(10, "ten");
+        auto& ref = ptr;
+        ptr = ref;
+        CHECK(ptr);
+        CHECK(ptr.use_count() == 1);
+        CHECK(ptr->a == 10);
+
+        ptr = std::move(ref);
+        CHECK(ptr);
+        CHECK(ptr.use_count() == 1);
+        CHECK(ptr->a == 10);
+
+        ptr.swap(ref);
+        CHECK(ptr);
+        CHECK(ptr.use_count() == 1);
+        CHECK(ptr->b == "ten");
+    }
+
+    // seme-cb
+    {
+        auto ptr = test::make_test_shared<obj>(10, "ten");
+
+        auto cptr = ptr;
+
+        ptr = cptr;
+        CHECK(ptr.use_count() == 2);
+        CHECK(cptr == ptr);
+
+        cptr.swap(ptr);
+        CHECK(ptr.use_count() == 2);
+        CHECK(cptr == ptr);
+
+        ptr = std::move(cptr);
+        CHECK(ptr.use_count() == 1);
+
+        CHECK(stats.living == 1);
+    }
+
+    // parent copy-over
+    {
+        auto pc = test::make_test_shared<child>(10, 20);
+        test::test_shared_ptr<obj> po = pc;
+        CHECK(pc.use_count() == 2);
+
+        po = pc;
+        CHECK(pc.use_count() == 2);
+
+        po = std::move(pc);
+        CHECK(po.use_count() == 1);
+
+        CHECK(stats.living == 1);
+    }
+
+    // aliased copies
+    {
+        auto pc = test::make_test_shared<child>(10, 20);
+        test::test_shared_ptr<int> pa(pc, &pc->a);
+        test::test_shared_ptr<int> pb(pc, &pc->c);
+
+        int a = 5, b = 6;
+        test::test_shared_ptr<int> pi1(test::test_shared_ptr<void>{}, & a);
+        test::test_shared_ptr<int> pi2(test::test_shared_ptr<void>{}, & b);
+
+        CHECK(pc.use_count() == 3);
+
+        pa.swap(pb);
+        CHECK(pc.use_count() == 3);
+        CHECK(pa != pb);
+        CHECK(xtest::same_owner(pa, pb));
+        CHECK(*pa == 20);
+        CHECK(*pb == 10);
+
+        pa = pb;
+        CHECK(pc.use_count() == 3);
+        CHECK(*pa == 10);
+
+        pi1.swap(pi2);
+        CHECK(pi1 != pi2);
+        CHECK(*pi1 == 6);
+        CHECK(*pi2 == 5);
+
+        pa = pi1;
+        CHECK(pc.use_count() == 2);
+
+        pi1 = pb;
+        CHECK(pc.use_count() == 3);
+
+        CHECK(stats.living == 1);
+    }
+
+    CHECK(stats.total == 4);
 }
