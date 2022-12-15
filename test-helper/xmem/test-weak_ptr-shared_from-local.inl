@@ -157,9 +157,14 @@ TEST_CASE("weak_ptr: self urusp and swap") {
     owptr1 = owptr1;
     CHECK(xtest::same_owner(owptr1, owptr2));
 
+#if !defined(__GLIBCXX__) || ENABLE_XMEM_SPECIFIC_CHECKS
+    // libstdc++ doesn't have a self-usurp check on weak pointers
+    // https://gcc.gnu.org/bugzilla/show_bug.cgi?id=108118
     auto& ref1 = owptr1;
     owptr1 = std::move(ref1);
     CHECK(xtest::same_owner(owptr1, owptr2));
+    CHECK(owptr1.lock() == ptr1);
+#endif
 
     owptr2 = std::move(owptr1);
     CHECK(xtest::no_owner(owptr1));
