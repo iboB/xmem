@@ -116,7 +116,7 @@ public:
             xmem::impl::spinlock::lock_guard _l(m_spinlock);
             m_ptr.swap(ptr);
         }
-        return std::move(ptr);
+        return ptr;
     }
 
     // have _strong to match atomic<shared_ptr>

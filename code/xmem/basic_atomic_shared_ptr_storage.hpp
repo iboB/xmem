@@ -34,7 +34,7 @@ public:
             impl::spinlock::lock_guard _l(m_spinlock);
             m_ptr.swap(ptr);
         }
-        return std::move(ptr);
+        return ptr;
     }
 
     bool compare_exchange(shared_pointer_type& expect, shared_pointer_type ptr) noexcept {
