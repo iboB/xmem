@@ -34,7 +34,7 @@ public:
     }
     template <typename U>
     basic_weak_ptr& operator=(const basic_weak_ptr<CBF, U>& r) noexcept {
-        if (m.cb) m.cb->dec_weak_ref();
+        if (m.cb) m.cb->dec_weak_ref(this);
         init_from_copy(r.m);
         return *this;
     }
@@ -55,7 +55,7 @@ public:
     }
     template <typename U>
     basic_weak_ptr& operator=(basic_weak_ptr<CBF, U>&& r) noexcept {
-        if (m.cb) m.cb->dec_weak_ref();
+        if (m.cb) m.cb->dec_weak_ref(this);
         init_from_move(r);
         return *this;
     }
@@ -66,7 +66,7 @@ public:
     }
     template <typename U>
     basic_weak_ptr& operator=(const basic_shared_ptr<CBF, U>& sptr) noexcept {
-        if (m.cb) m.cb->dec_weak_ref();
+        if (m.cb) m.cb->dec_weak_ref(this);
         init_from_copy(sptr.m);
         return *this;
     }

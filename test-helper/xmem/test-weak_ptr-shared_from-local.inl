@@ -136,8 +136,8 @@ TEST_CASE("weak_ptr: self urusp and swap") {
     obj::lifetime_stats stats;
     doctest::util::lifetime_counter_sentry _ls(stats);
 
-    auto ptr1 = test::make_test_shared<child>(10, 20);
-    auto ptr2 = test::make_test_shared<child>(11, 22);
+    const auto ptr1 = test::make_test_shared<child>(10, 20);
+    const auto ptr2 = test::make_test_shared<child>(11, 22);
 
     test::test_weak_ptr<child> wptr1 = ptr1;
     test::test_weak_ptr<child> wptr2 = ptr2;
@@ -157,18 +157,39 @@ TEST_CASE("weak_ptr: self urusp and swap") {
     owptr1 = owptr1;
     CHECK(xtest::same_owner(owptr1, owptr2));
 
+    auto& ref1 = owptr1;
 #if !defined(__GLIBCXX__) || ENABLE_XMEM_SPECIFIC_CHECKS
     // libstdc++ doesn't have a self-usurp check on weak pointers
     // https://gcc.gnu.org/bugzilla/show_bug.cgi?id=108118
-    auto& ref1 = owptr1;
     owptr1 = std::move(ref1);
     CHECK(xtest::same_owner(owptr1, owptr2));
     CHECK(owptr1.lock() == ptr1);
 #endif
+    owptr1.swap(ref1);
+    CHECK(xtest::same_owner(owptr1, owptr2));
+    CHECK(owptr1.lock() == ptr1);
 
     owptr2 = std::move(owptr1);
     CHECK(xtest::no_owner(owptr1));
     CHECK(xtest::same_owner(owptr2, ptr1));
+
+    owptr1 = ptr1;
+    CHECK(xtest::same_owner(owptr1, ptr1));
+    owptr1 = ptr1;
+    CHECK(xtest::same_owner(owptr1, owptr2));
+
+    wptr1.reset();
+    wptr1 = wptr1;
+    owptr1 = wptr1;
+    CHECK(xtest::no_owner(owptr1));
+    CHECK(xtest::same_owner(wptr1, owptr1));
+    owptr1.swap(ref1);
+    CHECK(xtest::no_owner(owptr1));
+
+    owptr1 = std::move(wptr2);
+    CHECK(xtest::same_owner(owptr1, ptr1));
+    CHECK(owptr1.lock() == ptr1);
+    CHECK(xtest::no_owner(wptr2));
 }
 
 //////////////////////////////////////////////////////////
