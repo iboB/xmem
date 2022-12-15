@@ -8,6 +8,12 @@
 #include <mutex>
 
 TEST_CASE("shared_ptr: mt") {
+    // no sensible checks here
+    // just confirm that there are no crashes and no sanitizer complaints
+
+    obj::lifetime_stats stats;
+    doctest::util::lifetime_counter_sentry _lcs(stats);
+
     std::mutex mto_a;
     std::vector<test::test_shared_ptr<obj>> to_a;
     std::mutex mto_b;
