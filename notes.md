@@ -1,9 +1,9 @@
 ## TODO
 
+* benchmarks
 * tracking demo
 * allocator-based tests of `shared_ptr`
 * allocate_unique
-* mt tests for shared and weak
 
 ## Differences
 
