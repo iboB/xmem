@@ -25,3 +25,4 @@ TEST_SUITE_BEGIN("local_shared_ptr");
 #include <xmem/test-weak_ptr-shared_from-local.inl>
 
 #include <xmem/test-shared_ptr-atomic.inl>
+#include <xmem/test-weak_ptr-atomic.inl>
