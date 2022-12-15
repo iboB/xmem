@@ -183,6 +183,14 @@ TEST_CASE("make_unique_ptr") {
     CHECK(heist->data() == vdata);
 }
 
+TEST_CASE("self usurp") {
+    auto a = test::make_unique<int>(4);
+    auto& ref = a;
+    a = std::move(ref);
+    CHECK(a);
+    CHECK(*a == 4);
+}
+
 TEST_CASE("deleter") {
     using optr = test::unique_ptr<obj, cnt_deleter>;
     static_assert(sizeof(optr) == sizeof(obj*) + sizeof(intptr_t));
