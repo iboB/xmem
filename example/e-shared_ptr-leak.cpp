@@ -13,38 +13,24 @@
 #include <unordered_set>
 #include <algorithm>
 #include <vector>
+#include <ctime>
 
 #define B_STACKTRACE_IMPL
 #include <b_stacktrace.h>
 
 namespace myapp {
 
-struct bookkeeping_control_block;
-namespace bookkeeping_control_block_registry {
-    std::mutex m_mutex;
-    std::unordered_set<const bookkeeping_control_block*> m_blocks;
-
-    void add(const bookkeeping_control_block* block) {
-        std::lock_guard _l(m_mutex);
-        m_blocks.insert(block);
-    }
-    void remove(const bookkeeping_control_block* block) {
-        std::lock_guard _l(m_mutex);
-        auto f = m_blocks.find(block);
-        m_blocks.erase(f);
-    }
-    std::vector<const bookkeeping_control_block*> get() {
-        std::lock_guard _l(m_mutex);
-        return {m_blocks.begin(), m_blocks.end()};
-    }
+struct free_deleter {
+    void operator()(char* ptr) { free(ptr); }
 };
 
 struct bookkeeping_control_block : protected xmem::control_block_base<xmem::atomic_ref_count> {
+    using stactrace_ptr = xmem::unique_ptr<char, free_deleter>;
+
+    stactrace_ptr creation;
+
     bookkeeping_control_block() {
-        bookkeeping_control_block_registry::add(this);
-    }
-    ~bookkeeping_control_block() {
-        bookkeeping_control_block_registry::remove(this);
+        creation.reset(b_stacktrace_get());
     }
 
     using super = xmem::control_block_base<xmem::atomic_ref_count>;
@@ -52,12 +38,8 @@ struct bookkeeping_control_block : protected xmem::control_block_base<xmem::atom
     std::mutex m_mutex;
 
     struct entry {
-        struct free_deleter {
-            void operator()(char* ptr) { free(ptr); }
-        };
-
         const void* ptr;
-        xmem::unique_ptr<char, free_deleter> stacktrace;
+        stactrace_ptr stacktrace;
     };
 
     std::vector<entry> active_strong;
@@ -143,18 +125,40 @@ template <typename T, typename... Args>
 
 }
 
-void foo(myapp::shared_ptr<const void> pl) {
-    auto blocks = myapp::bookkeeping_control_block_registry::get();
-    for (auto b : blocks) {
-        std::cout << "============= " << b << " ===============\n\n";
-        for (auto& r : b->active_strong) {
-            std::cout << r.stacktrace.get() << "\n\n";
-        }
-    }
+using session = int;
+
+auto session_factory(int id) {
+    return myapp::make_shared<session>(id);
 }
 
 int main() {
-    auto p = myapp::make_shared<int>(34);
-    auto p2 = myapp::make_shared<int>(22);
-    foo(std::move(p2));
+    myapp::shared_ptr<session> leak;
+
+    std::vector<myapp::weak_ptr<session>> registry;
+
+    constexpr int N = 20;
+    srand(unsigned(time(nullptr)));
+    auto i_to_leak = rand() % (2 * N);
+    for (int i = 0; i < N; ++i) {
+        auto sptr = session_factory(i);
+        registry.push_back(sptr);
+        if (i == i_to_leak) {
+            leak = sptr;
+        }
+    }
+
+    for (auto& w : registry) {
+        if (w.use_count()) {
+            std::cout << "\n====================\n";
+            std::cout << "found a leak:\n";
+            auto cb = w.t_owner();
+            std::cout << "in object: " << cb << " created here:\n";
+            std::cout << cb->creation.get();
+            std::cout << "\n with living refs:\n";
+            for (auto& ref : cb->active_strong) {
+                std::cout << ref.ptr << ":\n";
+                std::cout << ref.stacktrace.get() << "\n";
+            }
+        }
+    }
 }
