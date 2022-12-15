@@ -22,7 +22,8 @@ public:
         init_from_copy(r.m);
     }
     basic_weak_ptr& operator=(const basic_weak_ptr& r) noexcept {
-        if (m.cb) m.cb->dec_weak_ref();
+        if (&r == this) return *this; // self usurp
+        if (m.cb) m.cb->dec_weak_ref(this);
         init_from_copy(r.m);
         return *this;
     }
@@ -42,6 +43,7 @@ public:
         init_from_move(r);
     }
     basic_weak_ptr& operator=(basic_weak_ptr&& r) noexcept {
+        if (&r == this) return *this; // self usurp
         if (m.cb) m.cb->dec_weak_ref(this);
         init_from_move(r);
         return *this;
@@ -98,7 +100,16 @@ public:
     }
 
     void swap(basic_weak_ptr& r) noexcept {
-        m.swap(r.m);
+        // a self usurp check wouldn't be needed here in a conventional implementation,
+        // but we want to make sane transfer_weak calls
+        if (m.cb != r.m.cb) {
+            if (m.cb) m.cb->transfer_weak(&r, this);
+            m.swap(r.m);
+            if (m.cb) m.cb->transfer_weak(this, &r);
+        }
+        else {
+            std::swap(m.ptr, r.m.ptr);
+        }
     }
 
     [[nodiscard]] long use_count() const noexcept {
@@ -149,6 +160,8 @@ private:
     }
 
     cb_ptr_pair_type m;
+
+    template <typename, typename> friend class basic_weak_ptr;
 };
 
 template <typename CBF, typename T>

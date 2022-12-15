@@ -132,6 +132,40 @@ TEST_CASE("weak_ptr: alias") {
 }
 #endif
 
+TEST_CASE("weak_ptr: self urusp and swap") {
+    obj::lifetime_stats stats;
+    doctest::util::lifetime_counter_sentry _ls(stats);
+
+    auto ptr1 = test::make_test_shared<child>(10, 20);
+    auto ptr2 = test::make_test_shared<child>(11, 22);
+
+    test::test_weak_ptr<child> wptr1 = ptr1;
+    test::test_weak_ptr<child> wptr2 = ptr2;
+
+    wptr1.swap(wptr2);
+
+    CHECK(wptr1.lock() == ptr2);
+    CHECK(wptr2.lock() == ptr1);
+
+    test::test_weak_ptr<obj> owptr1 = wptr2;
+    test::test_weak_ptr<obj> owptr2 = ptr1;
+    CHECK(xtest::same_owner(owptr1, owptr2));
+
+    owptr1 = owptr2;
+    CHECK(xtest::same_owner(owptr1, owptr2));
+
+    owptr1 = owptr1;
+    CHECK(xtest::same_owner(owptr1, owptr2));
+
+    auto& ref1 = owptr1;
+    owptr1 = std::move(ref1);
+    CHECK(xtest::same_owner(owptr1, owptr2));
+
+    owptr2 = std::move(owptr1);
+    CHECK(xtest::no_owner(owptr1));
+    CHECK(xtest::same_owner(owptr2, ptr1));
+}
+
 //////////////////////////////////////////////////////////
 
 class sf_type : public xtest::enable_test_shared_from {
