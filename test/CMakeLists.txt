@@ -6,11 +6,12 @@ cmake_minimum_required(VERSION 3.14)
 include(./get_cpm.cmake)
 
 CPMAddPackage(gh:iboB/doctest-util@0.0.6)
+CPMAddPackage(gh:iboB/splat@1.2.2)
 
 find_package(Threads REQUIRED)
 
 macro(xmem_test test)
-    add_doctest_lib_test(${test} xmem ${ARGN} LIBRARIES xmem::test-helper ${CMAKE_THREAD_LIBS_INIT})
+    add_doctest_lib_test(${test} xmem ${ARGN} LIBRARIES xmem::test-helper splat::splat ${CMAKE_THREAD_LIBS_INIT})
 endmacro()
 
 xmem_test(unique_ptr t-unique_ptr.cpp)

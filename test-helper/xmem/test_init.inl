@@ -9,6 +9,9 @@
 #include <cstdint>
 #include <vector>
 
+#include <splat/warnings.h>
+DISABLE_CLANG_ONLY_WARNING("-Wself-assign-overloaded")
+
 struct cnt_deleter {
     intptr_t dels = 0;
     void operator()(int* iptr) {
