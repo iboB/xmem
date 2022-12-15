@@ -5,6 +5,143 @@
 // inline file - no include guard
 
 #include <thread>
+#include <mutex>
+
+TEST_CASE("shared_ptr: mt") {
+    std::mutex mto_a;
+    std::vector<test::test_shared_ptr<obj>> to_a;
+    std::mutex mto_b;
+    std::vector<test::test_shared_ptr<obj>> to_b;
+    std::mutex mto_c;
+    std::vector<test::test_shared_ptr<obj>> to_c;
+
+    std::atomic<bool> start{false};
+    int sum_a = 0, sum_b = 0, sum_c = 0;
+
+
+    std::thread t_a([&]() {
+        while (!start);
+        std::vector<test::test_shared_ptr<obj>> work;
+        std::vector<test::test_shared_ptr<obj>> stored;
+        int i = 0;
+        while (true) {
+            {
+                std::lock_guard _l(mto_a);
+                work.swap(to_a);
+            }
+
+            ++i;
+            if (i < 10) {
+                std::lock_guard _l(mto_c);
+                to_c.push_back(test::make_test_shared<obj>(i));
+            }
+            if (i == 10) {
+                std::lock_guard _l(mto_c);
+                to_c.push_back({});
+            }
+
+            for (auto& p : work) {
+                if (!p) {
+                    if (i < 10) {
+                        std::lock_guard _l(mto_c);
+                        to_c.push_back({});
+                    }
+                    return;
+                }
+                if (p->val() == 10) {
+                    stored.push_back(p);
+                }
+                else if (p->val() > 20) {
+                    std::lock_guard _l(mto_b);
+                    to_b.push_back(p);
+                }
+
+                sum_a += p->val();
+            }
+        }
+    });
+
+    std::thread t_b([&]() {
+        while (!start);
+        std::vector<test::test_shared_ptr<obj>> work;
+        std::vector<test::test_shared_ptr<obj>> stored;
+        int i = 0;
+
+        while (true) {
+            {
+                std::lock_guard _l(mto_b);
+                work.swap(to_b);
+            }
+
+            ++i;
+            if (i < 10) {
+                std::lock_guard _l(mto_a);
+                to_a.push_back(test::make_test_shared<obj>(i * i));
+            }
+            if (i == 10) {
+                std::lock_guard _l(mto_a);
+                to_a.push_back({});
+            }
+
+            for (auto& p : work) {
+                if (!p) {
+                    if (i < 10) {
+                        std::lock_guard _l(mto_a);
+                        to_a.push_back({});
+                    }
+                    return;
+                }
+                sum_b += p->val();
+                if (p->val() > 30) {
+                    stored.push_back(p);
+                }
+            }
+        }
+    });
+
+    std::thread t_c([&]() {
+        while (!start);
+        std::vector<test::test_shared_ptr<obj>> work;
+        int i = 0;
+
+        while (true) {
+            {
+                std::lock_guard _l(mto_c);
+                work.swap(to_c);
+            }
+
+            ++i;
+            if (i < 10) {
+                std::lock_guard _l(mto_b);
+                to_b.push_back(test::make_test_shared<child>(2 * i, 3 * i));
+            }
+            if (i == 10) {
+                std::lock_guard _l(mto_b);
+                to_b.push_back({});
+            }
+
+            for (auto& p : work) {
+                if (!p) {
+                    if (i < 10) {
+                        std::lock_guard _l(mto_b);
+                        to_b.push_back({});
+                    }
+                    return;
+                }
+                sum_c += p->val();
+            }
+        }
+    });
+
+    start = true;
+    t_a.join();
+    t_b.join();
+    t_c.join();
+
+    CHECK(sum_a > 0);
+    CHECK(sum_b > 0);
+    CHECK(sum_c > 0);
+}
 
 TEST_CASE("atomic_shared_ptr_storage: basic") {
     static_assert(sizeof(xtest::atomic_shared_ptr_storage<int>) <= 64, "We want true sharing here");

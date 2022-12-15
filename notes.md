@@ -1,10 +1,9 @@
 ## TODO
 
-* `swap` test for `weak_ptr`
 * tracking demo
 * allocator-based tests of `shared_ptr`
 * allocate_unique
-
+* mt tests for shared and weak
 
 ## Differences
 
@@ -25,5 +24,5 @@
 * `same_owner`, `no_woner`
 * `atomic_shared_ptr_storage`
 * no exceptions as a whole
-* C++20 features
+* some C++20 features
 
