@@ -1,6 +1,6 @@
 # xmem
 
-An alternative implementation of (most of) the functionality of the standard header `<memory>` with some additiona features.
+An alternative implementation of (most of) the functionality of the standard header `<memory>` with some additional features.
 
 xmem requires at least C++17.
 
