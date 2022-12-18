@@ -16,7 +16,7 @@ endmacro()
 
 xmem_example(unique_ptr-cppref e-unique_ptr-cppref.cpp)
 
-CPMAddPackage(gh:iboB/b_stacktrace@0.10)
+CPMAddPackage(gh:iboB/b_stacktrace@0.20)
 
 xmem_example(shared_ptr-leak
     e-shared_ptr-leak.cpp

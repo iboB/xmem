@@ -21,11 +21,11 @@
 namespace myapp {
 
 struct free_deleter {
-    void operator()(char* ptr) { free(ptr); }
+    void operator()(void* ptr) { free(ptr); }
 };
 
 struct bookkeeping_control_block : protected xmem::control_block_base<xmem::atomic_ref_count> {
-    using stactrace_ptr = xmem::unique_ptr<char, free_deleter>;
+    using stactrace_ptr = xmem::unique_ptr<void, free_deleter>;
 
     stactrace_ptr creation;
 

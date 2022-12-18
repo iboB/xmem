@@ -24,12 +24,7 @@ struct spinlock {
     };
 };
 
-inline constexpr size_t cache_line_size =
-#if defined(__cpp_lib_hardware_interference_size)
-    std::hardware_destructive_interference_size
-#else
-    64
-#endif
+inline constexpr size_t cache_line_size = 64;
 ;
 
 }
