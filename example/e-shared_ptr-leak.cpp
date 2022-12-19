@@ -24,13 +24,29 @@ struct free_deleter {
     void operator()(void* ptr) { free(ptr); }
 };
 
-struct bookkeeping_control_block : protected xmem::control_block_base<xmem::atomic_ref_count> {
-    using stactrace_ptr = xmem::unique_ptr<void, free_deleter>;
+struct stacktrace {
+    xmem::unique_ptr<b_stacktrace_tag, free_deleter> m_trace;
+    explicit operator bool() { return !!m_trace; }
+    void init() {
+        m_trace.reset(b_stacktrace_get());
+    }
+    friend std::ostream& operator<<(std::ostream& out, const stacktrace& st) {
+        if (st.m_trace) {
+            auto str = xmem::unique_ptr<char, free_deleter>(b_stacktrace_to_string(st.m_trace.get()));
+            out << str.get();
+        }
+        else {
+            out << "<no stacktrace available>";
+        }
+        return out;
+    }
+};
 
-    stactrace_ptr creation;
+struct bookkeeping_control_block : protected xmem::control_block_base<xmem::atomic_ref_count> {
+    stacktrace creation;
 
     bookkeeping_control_block() {
-        creation.reset(b_stacktrace_get());
+        creation.init();
     }
 
     using super = xmem::control_block_base<xmem::atomic_ref_count>;
@@ -39,7 +55,7 @@ struct bookkeeping_control_block : protected xmem::control_block_base<xmem::atom
 
     struct entry {
         const void* ptr;
-        stactrace_ptr stacktrace;
+        stacktrace stacktrace;
     };
 
     std::vector<entry> active_strong;
@@ -48,7 +64,7 @@ struct bookkeeping_control_block : protected xmem::control_block_base<xmem::atom
         std::lock_guard _l(m_mutex);
         auto& e = active_strong.emplace_back();
         e.ptr = src;
-        e.stacktrace.reset(b_stacktrace_get());
+        e.stacktrace.init();
     }
 
     void on_destroy_strong(const void* src) {
@@ -153,11 +169,11 @@ int main() {
             std::cout << "found a leak:\n";
             auto cb = w.t_owner();
             std::cout << "in object: " << cb << " created here:\n";
-            std::cout << cb->creation.get();
+            std::cout << cb->creation;
             std::cout << "\n with living refs:\n";
             for (auto& ref : cb->active_strong) {
                 std::cout << ref.ptr << ":\n";
-                std::cout << ref.stacktrace.get() << "\n";
+                std::cout << ref.stacktrace << "\n";
             }
         }
     }
