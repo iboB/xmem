@@ -55,7 +55,7 @@ struct bookkeeping_control_block : protected xmem::control_block_base<xmem::atom
 
     struct entry {
         const void* ptr;
-        stacktrace stacktrace;
+        stacktrace trace;
     };
 
     std::vector<entry> active_strong;
@@ -64,7 +64,7 @@ struct bookkeeping_control_block : protected xmem::control_block_base<xmem::atom
         std::lock_guard _l(m_mutex);
         auto& e = active_strong.emplace_back();
         e.ptr = src;
-        e.stacktrace.init();
+        e.trace.init();
     }
 
     void on_destroy_strong(const void* src) {
@@ -173,7 +173,7 @@ int main() {
             std::cout << "\n with living refs:\n";
             for (auto& ref : cb->active_strong) {
                 std::cout << ref.ptr << ":\n";
-                std::cout << ref.stacktrace << "\n";
+                std::cout << ref.trace << "\n";
             }
         }
     }
