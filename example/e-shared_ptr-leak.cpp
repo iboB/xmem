@@ -15,6 +15,7 @@
 #include <mutex>
 #include <unordered_set>
 #include <algorithm>
+#include <iomanip>
 
 #include <xmem/atomic_ref_count.hpp>
 #include <xmem/common_control_block.hpp>
@@ -58,16 +59,19 @@ public:
         stacktrace trace;
     };
 private:
-    stacktrace m_creation;
+    std::time_t m_creation_time;
+    stacktrace m_creation_trace;
     mutable std::mutex m_mutex;
     std::vector<entry> m_active_strong;
 public:
 
     bookkeeping_control_block()
-        : m_creation(stacktrace::init)
+        : m_creation_time(std::time(nullptr))
+        , m_creation_trace(stacktrace::init)
     {}
 
-    const stacktrace& creation() const { return m_creation; }
+    const time_t& creation_time() const { return m_creation_time; }
+    const stacktrace& creation_trace() const { return m_creation_trace; }
     void log_active_strong(std::ostream& out) const {
         std::lock_guard _l(m_mutex);
         for (auto& ref : m_active_strong) {
@@ -186,7 +190,7 @@ int main() {
     std::vector<myapp::weak_ptr<session>> registry;
 
     constexpr int N = 20;
-    srand(unsigned(time(nullptr)));
+    srand(unsigned(std::time(nullptr)));
     auto i_to_leak = rand() % (2 * N);
     for (int i = 0; i < N; ++i) {
         auto sptr = session_factory(i);
@@ -202,8 +206,9 @@ int main() {
             std::cout << "\n====================\n";
             std::cout << "found a leak:\n";
             auto cb = w.t_owner();
-            std::cout << "in object: " << cb << " created here:\n";
-            std::cout << cb->creation();
+            auto tm = std::localtime(&cb->creation_time());
+            std::cout << "in object: " << cb << " created on " << std::put_time(tm, "%c %Z") << " here:\n";
+            std::cout << cb->creation_trace();
             std::cout << "\nwith living refs:\n";
             cb->log_active_strong(std::cout);
 #else
