@@ -5,15 +5,20 @@
 // this example demonstrates the catching of a shared pointer leak
 
 #include <iostream>
+#include <vector>
+#include <ctime>
 
-#include <xmem/atomic_ref_count.hpp>
-#include <xmem/common_control_block.hpp>
+#define TRACK_SHARED_PTR_LEAKS 0
+
+#if TRACK_SHARED_PTR_LEAKS
 
 #include <mutex>
 #include <unordered_set>
 #include <algorithm>
-#include <vector>
-#include <ctime>
+
+#include <xmem/atomic_ref_count.hpp>
+#include <xmem/common_control_block.hpp>
+#include <xmem/ostream.hpp>
 
 #define B_STACKTRACE_IMPL
 #include <b_stacktrace.h>
@@ -141,6 +146,21 @@ template <typename T, typename... Args>
 
 }
 
+#else
+#include <memory>
+namespace myapp {
+template <typename T>
+using shared_ptr = std::shared_ptr<T>;
+template <typename T>
+using weak_ptr = std::weak_ptr<T>;
+template <typename T, typename... Args>
+[[nodiscard]] shared_ptr<T> make_shared(Args&&... args) {
+    return std::make_shared<T>(std::forward<Args>(args)...);
+
+}
+}
+#endif
+
 using session = int;
 
 auto session_factory(int id) {
@@ -165,6 +185,7 @@ int main() {
 
     for (auto& w : registry) {
         if (w.use_count()) {
+#if TRACK_SHARED_PTR_LEAKS
             std::cout << "\n====================\n";
             std::cout << "found a leak:\n";
             auto cb = w.t_owner();
@@ -175,6 +196,9 @@ int main() {
                 std::cout << ref.ptr << ":\n";
                 std::cout << ref.trace << "\n";
             }
+#else
+            std::cout << "found a leak in " << w.lock() << "\n";
+#endif
         }
     }
 }
