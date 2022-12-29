@@ -8,7 +8,7 @@
 #include <vector>
 #include <ctime>
 
-#define TRACK_SHARED_PTR_LEAKS 0
+#define TRACK_SHARED_PTR_LEAKS 1
 
 #if TRACK_SHARED_PTR_LEAKS
 
@@ -30,9 +30,13 @@ struct free_deleter {
 };
 
 struct stacktrace {
+    static constexpr bool init = true;
+    stacktrace(bool init = false) {
+        if (init) record();
+    }
     xmem::unique_ptr<b_stacktrace_tag, free_deleter> m_trace;
     explicit operator bool() { return !!m_trace; }
-    void init() {
+    void record() {
         m_trace.reset(b_stacktrace_get());
     }
     friend std::ostream& operator<<(std::ostream& out, const stacktrace& st) {
@@ -47,35 +51,44 @@ struct stacktrace {
     }
 };
 
-struct bookkeeping_control_block : protected xmem::control_block_base<xmem::atomic_ref_count> {
-    stacktrace creation;
-
-    bookkeeping_control_block() {
-        creation.init();
-    }
-
-    using super = xmem::control_block_base<xmem::atomic_ref_count>;
-
-    std::mutex m_mutex;
-
+class bookkeeping_control_block : protected xmem::control_block_base<xmem::atomic_ref_count> {
+public:
     struct entry {
         const void* ptr;
         stacktrace trace;
     };
+private:
+    stacktrace m_creation;
+    mutable std::mutex m_mutex;
+    std::vector<entry> m_active_strong;
+public:
 
-    std::vector<entry> active_strong;
+    bookkeeping_control_block()
+        : m_creation(stacktrace::init)
+    {}
+
+    const stacktrace& creation() const { return m_creation; }
+    void log_active_strong(std::ostream& out) const {
+        std::lock_guard _l(m_mutex);
+        for (auto& ref : m_active_strong) {
+            out << ref.ptr << ":\n";
+            out << ref.trace << "\n";
+        }
+    }
+
+    using super = xmem::control_block_base<xmem::atomic_ref_count>;
 
     void on_new_strong(const void* src) {
         std::lock_guard _l(m_mutex);
-        auto& e = active_strong.emplace_back();
+        auto& e = m_active_strong.emplace_back();
         e.ptr = src;
-        e.trace.init();
+        e.trace.record();
     }
 
     void on_destroy_strong(const void* src) {
         std::lock_guard _l(m_mutex);
-        auto f = std::find_if(active_strong.begin(), active_strong.end(), [&](const entry& e) { return e.ptr == src; });
-        active_strong.erase(f);
+        auto f = std::find_if(m_active_strong.begin(), m_active_strong.end(), [&](const entry& e) { return e.ptr == src; });
+        m_active_strong.erase(f);
     }
 
     void on_new_weak(const void* /*src*/) {
@@ -190,12 +203,9 @@ int main() {
             std::cout << "found a leak:\n";
             auto cb = w.t_owner();
             std::cout << "in object: " << cb << " created here:\n";
-            std::cout << cb->creation;
-            std::cout << "\n with living refs:\n";
-            for (auto& ref : cb->active_strong) {
-                std::cout << ref.ptr << ":\n";
-                std::cout << ref.trace << "\n";
-            }
+            std::cout << cb->creation();
+            std::cout << "\nwith living refs:\n";
+            cb->log_active_strong(std::cout);
 #else
             std::cout << "found a leak in " << w.lock() << "\n";
 #endif
