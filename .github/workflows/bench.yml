@@ -1,0 +1,20 @@
+# Copyright (c) Borislav Stanimirov
+# SPDX-License-Identifier: MIT
+#
+name: Benchmark
+on: [push]
+jobs:
+  benchmark:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-20.04, windows-latest, macos-latest]
+    steps:
+      - name: Clone
+        uses: actions/checkout@v3
+      - name: Configure
+        run: cmake . -DCMAKE_BUILD_TYPE=Release -DXMEM_BUILD_TESTS=0 -DXMEM_BUILD_EXAMPLES=0 -DXMEM_BUILD_BENCHMARKS=1
+      - name: Build
+        run: cmake --build . --config Release
+      - name: unique_ptr
+        run: ./bin/bench-xmem-unique_ptr
