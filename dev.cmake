@@ -24,8 +24,7 @@ if(SAN_THREAD)
     endif()
 elseif(SAN_ADDR)
     if(MSVC)
-        # TODO: test and then enable
-        # set(icm_san_flags "-fsanitize=address")
+        set(icm_san_flags "/fsanitize=address")
     elseif(APPLE)
         # apple clang doesn't support the leak sanitizer
         set(icm_san_flags "-fsanitize=address,undefined -pthread -g")

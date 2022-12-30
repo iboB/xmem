@@ -4,3 +4,4 @@ out/
 # ides
 .vscode/
 .vs/
+CMakeSettings.json
