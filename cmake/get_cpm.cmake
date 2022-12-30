@@ -1,3 +1,5 @@
+include_guard(GLOBAL)
+
 set(CPM_DOWNLOAD_VERSION 0.35.6)
 
 if(CPM_SOURCE_CACHE)

@@ -2,8 +2,7 @@
 # SPDX-License-Identifier: MIT
 #
 cmake_minimum_required(VERSION 3.14)
-
-include(./get_cpm.cmake)
+include(../cmake/get_cpm.cmake)
 
 CPMAddPackage(gh:iboB/doctest-util@0.0.7)
 CPMAddPackage(gh:iboB/splat@1.2.2)
