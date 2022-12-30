@@ -21,3 +21,4 @@ macro(xmem_benchmark name)
 endmacro()
 
 xmem_benchmark(unique_ptr b-unique_ptr-std.cpp b-unique_ptr-xmem.cpp)
+xmem_benchmark(shared_ptr b-shared_ptr-std.cpp b-shared_ptr-xmem.cpp b-shared_ptr-xmem-local.cpp)
