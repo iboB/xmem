@@ -17,4 +17,4 @@ jobs:
       - name: Build
         run: cmake --build . --config Release
       - name: unique_ptr
-        run: ./bin/bench-xmem-unique_ptr
+        run: cmake --build . --config Release --target=benchmark-xmem-unique_ptr

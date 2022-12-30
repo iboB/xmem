@@ -14,6 +14,10 @@ macro(xmem_benchmark name)
     add_executable(${tgt})
     target_sources(${tgt} PRIVATE ${ARGN})
     target_link_libraries(${tgt} xmem::xmem picobench-main)
+    add_custom_target(
+        benchmark-xmem-${name}
+        COMMAND ${tgt}
+    )
 endmacro()
 
 xmem_benchmark(unique_ptr b-unique_ptr-std.cpp b-unique_ptr-xmem.cpp)
