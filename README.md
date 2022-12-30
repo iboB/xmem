@@ -1,5 +1,7 @@
 # xmem
 
+[![Build](https://github.com/iboB/xmem/actions/workflows/build.yml/badge.svg)](https://github.com/iboB/xmem/actions/workflows/build.yml)
+
 An alternative implementation of the smart pointers in the standard header `<memory>` with some additional features.
 
 xmem requires at least C++17.
@@ -32,9 +34,8 @@ The external functionalities: `make_aliased`, `make_ptr`, `enable_shared_from`, 
 
 This is not yet production ready, though it is likely usable. Here are the most important things to do before I can call it production ready:
 
-* Create tracking demos, and perhaps improve the interface to support them better
+* Create more tracking demos, and perhaps improve the interface to support them better
 * Write `allocator`-based tests for `shared_ptr`, and fix bugs if any
-* Create benchmakrs and look for peformance issues
 
 ## License
 
