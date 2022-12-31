@@ -1,6 +1,6 @@
 # xmem
 
-[![Build](https://github.com/iboB/xmem/actions/workflows/unit-test.yml/badge.svg)](https://github.com/iboB/xmem/actions/workflows/unit-test.yml)
+[![Standard](https://img.shields.io/badge/C%2B%2B-17-blue.svg)](https://en.wikipedia.org/wiki/C%2B%2B#Standardization) [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/licenses/MIT) [![Build](https://github.com/iboB/xmem/actions/workflows/unit-test.yml/badge.svg)](https://github.com/iboB/xmem/actions/workflows/unit-test.yml)
 
 An alternative implementation of the smart pointers in the standard header `<memory>` with some additional features.
 
@@ -28,11 +28,9 @@ xmem requires at least C++17.
     * `no_owner` - check if a weak/shared pointer has no owner
 * Functions from C++20: `make_shared_for_overwrite`, `make_unique_for_overwrite`
 
-The external functionalities: `make_aliased`, `make_ptr`, `enable_shared_from`, `atomic_shared_ptr_storage`, `same_owner`, `no_owner`, are also available for the applicable `std::` pointers through the header `xmem/std_helpers.hpp`
+The external functionalities: `make_aliased`, `make_ptr`, `enable_shared_from`, `atomic_shared_ptr_storage`, `same_owner`, `no_owner`, are also available for the applicable `std::` pointers through the header `xmem/std_helpers.hpp` in namespace `xstd`.
 
 ## TODO
-
-This is not yet production ready, though it is likely usable. Here are the most important things to do before I can call it production ready:
 
 * Create more tracking demos, and perhaps improve the interface to support them better
 * Write `allocator`-based tests for `shared_ptr`, and fix bugs if any
@@ -43,4 +41,4 @@ This software is distributed under the MIT Software License.
 
 See accompanying file LICENSE or copy [here](https://opensource.org/licenses/MIT).
 
-Copyright &copy; 2022 [Borislav Stanimirov](http://github.com/iboB)
+Copyright &copy; 2022-2023 [Borislav Stanimirov](http://github.com/iboB)
