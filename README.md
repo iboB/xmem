@@ -1,6 +1,6 @@
 # xmem
 
-[![Build](https://github.com/iboB/xmem/actions/workflows/build.yml/badge.svg)](https://github.com/iboB/xmem/actions/workflows/build.yml)
+[![Build](https://github.com/iboB/xmem/actions/workflows/unit-test.yml/badge.svg)](https://github.com/iboB/xmem/actions/workflows/unit-test.yml)
 
 An alternative implementation of the smart pointers in the standard header `<memory>` with some additional features.
 
