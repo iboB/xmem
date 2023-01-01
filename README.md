@@ -30,11 +30,6 @@ xmem requires at least C++17.
 
 The external functionalities: `make_aliased`, `make_ptr`, `enable_shared_from`, `atomic_shared_ptr_storage`, `same_owner`, `no_owner`, are also available for the applicable `std::` pointers through the header `xmem/std_helpers.hpp` in namespace `xstd`.
 
-## TODO
-
-* Create more tracking demos, and perhaps improve the interface to support them better
-* Write `allocator`-based tests for `shared_ptr`, and fix bugs if any
-
 ## License
 
 This software is distributed under the MIT Software License.
