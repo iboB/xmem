@@ -154,8 +154,6 @@ using shared_ptr = xmem::basic_shared_ptr<bookkeeping_control_block_factory, T>;
 template <typename T>
 using weak_ptr = xmem::basic_weak_ptr<bookkeeping_control_block_factory, T>;
 
-using shared_from = xmem::basic_enable_shared_from<bookkeeping_control_block_factory>;
-
 template <typename T, typename... Args>
 [[nodiscard]] shared_ptr<T> make_shared(Args&&... args) {
     return shared_ptr<T>(bookkeeping_control_block_factory::make_resource_cb<T>(std::allocator<char>{}, std::forward<Args>(args)...));
