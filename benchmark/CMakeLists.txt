@@ -4,7 +4,7 @@
 cmake_minimum_required(VERSION 3.14)
 include(../cmake/get_cpm.cmake)
 
-CPMAddPackage(gh:iboB/picobench@2.02)
+CPMAddPackage(gh:iboB/picobench@2.07)
 
 add_library(picobench-main STATIC picobench-main.cpp)
 target_link_libraries(picobench-main PUBLIC picobench)
