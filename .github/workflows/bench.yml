@@ -15,7 +15,7 @@ jobs:
         os: [ubuntu-latest, windows-latest, macos-latest]
     steps:
       - name: Clone
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Configure
         run: cmake . -DCMAKE_BUILD_TYPE=Release -DXMEM_BUILD_TESTS=0 -DXMEM_BUILD_EXAMPLES=0 -DXMEM_BUILD_BENCHMARKS=1
       - name: Build
