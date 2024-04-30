@@ -21,10 +21,9 @@ xmem_example(unique_ptr-cppref e-unique_ptr-cppref.cpp)
 xmem_example(shared_ptr-cppref e-shared_ptr-cppref.cpp)
 xmem_example(local_shared_ptr-cppref e-local_shared_ptr-cppref.cpp)
 
-CPMAddPackage(gh:iboB/b_stacktrace@0.21)
+CPMAddPackage(gh:iboB/b_stacktrace@0.22)
 
 xmem_example(shared_ptr-leak
     e-shared_ptr-leak.cpp
-    INC ${b_stacktrace_SOURCE_DIR}
-    LIBS ${CMAKE_DL_LIBS}
+    LIBS ${CMAKE_DL_LIBS} b_stacktrace::b_stacktrace
 )
