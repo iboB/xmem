@@ -4,6 +4,8 @@
 
 An alternative implementation of the smart pointers in the standard header `<memory>` with some additional features.
 
+[Blog post about this library and the motivation behind it.](https://ibob.bg/blog/2023/01/01/tracking-shared-ptr-leaks/)
+
 xmem requires at least C++17.
 
 ## xmem vs &lt;memory&gt;
@@ -17,13 +19,13 @@ xmem requires at least C++17.
     * The owner (control block) of the pointer is directly accessible as `const void*` through `ptr.owner()` and stronly typed as `const control_block_type*` through `ptr.t_owner()`
     * There is no constructor through weak ptr, and no `shared_ptr` operation throws an exception (except ones by proxy, on allocation or if constructing the object in `make_shared` throws)
     * A helper function: `make_shared_ptr` to make a `shared_ptr` from an existing object
-    * A helper function: `make_aliased` to make a `shared_ptr` by aliasing another, but safely returning `nullptr` if the source is null.    
+    * A helper function: `make_aliased` to make a `shared_ptr` by aliasing another, but safely returning `nullptr` if the source is null.
 * `weak_ptr`:
     * Like `shared_ptr` it has the control block as a template argument and offers control block access through `owner` and `t_owner`
     * The pointer has a boolean interface which means no associated control block and says nothing about whether the pointer has expired or not.
     * An aliasing constructor like the one in `shared_ptr` is provided
 * Besides `enable_shared_from_this` a non-template alternative is introduced `enable_shared_from` which (in the author's opinion) has a better interface. This is inspired from Boost.SmartPtr.
-* Helper functions 
+* Helper functions
     * `same_owner` - check whether two shared/weak pointers have the same owner
     * `no_owner` - check if a weak/shared pointer has no owner
 * Functions from C++20: `make_shared_for_overwrite`, `make_unique_for_overwrite`
