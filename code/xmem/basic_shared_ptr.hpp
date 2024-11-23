@@ -4,7 +4,6 @@
 #pragma once
 #include "cb_ptr_pair.hpp"
 #include "unique_ptr.hpp"
-#include "allocator_rebind.hpp"
 
 namespace xmem {
 
