@@ -208,9 +208,29 @@ template <typename CBF, typename T1, typename T2>
 }
 
 template <typename CBF, typename U, typename T>
-basic_shared_ptr<CBF, T> make_aliased(const basic_shared_ptr<CBF, U>& owner, T* ptr) {
+[[nodiscard]] basic_shared_ptr<CBF, T> make_aliased(const basic_shared_ptr<CBF, U>& owner, T* ptr) {
     if (owner.use_count() == 0) return {};
     return basic_shared_ptr<CBF, T>(owner, ptr);
+}
+
+// casts
+
+#define I_XMEM_MAKE_POINTER_CAST(cast) \
+    template <typename T, typename CBF, typename U> \
+    [[nodiscard]] basic_shared_ptr<CBF, T> cast##_pointer_cast(const basic_shared_ptr<CBF, U>& owner) { \
+        return make_aliased(owner, cast##_cast<T*>(owner.get())); \
+    }
+
+I_XMEM_MAKE_POINTER_CAST(static)
+I_XMEM_MAKE_POINTER_CAST(const)
+I_XMEM_MAKE_POINTER_CAST(reinterpret)
+
+// not using the macro for dynamic_pointer_cast because we need to check for null
+template <typename T, typename CBF, typename U> \
+[[nodiscard]] basic_shared_ptr<CBF, T> dynamic_pointer_cast(const basic_shared_ptr<CBF, U>& owner) {
+    auto ptr = dynamic_cast<T*>(owner.get());
+    if (!ptr) return {};
+    return make_aliased(owner, ptr);
 }
 
 } // namespace xmem

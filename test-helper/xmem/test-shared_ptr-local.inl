@@ -387,3 +387,62 @@ TEST_CASE("shared_ptr: self usurp") {
 
     CHECK(stats.total == 4);
 }
+
+TEST_CASE("shared_ptr: cast null") {
+    test::test_shared_ptr<const multi_child> cptr;
+    CHECK_FALSE(cptr);
+    auto ptr = test::const_pointer_cast<multi_child>(cptr);
+    CHECK_FALSE(ptr);
+    test::test_shared_ptr<obj> as_obj = ptr;
+    CHECK_FALSE(as_obj);
+    test::test_shared_ptr<vec> as_vec = ptr;
+    CHECK_FALSE(as_vec);
+    auto sc = test::static_pointer_cast<multi_child>(as_vec);
+    CHECK_FALSE(sc);
+    auto dc = test::dynamic_pointer_cast<multi_child>(as_obj);
+    CHECK_FALSE(dc);
+    test::test_shared_ptr<void> erased = ptr;
+    CHECK_FALSE(erased);
+    auto rc = test::reinterpret_pointer_cast<multi_child>(erased);
+    CHECK_FALSE(rc);
+}
+
+TEST_CASE("shared_ptr: cast") {
+    obj::lifetime_stats stats;
+
+    test::test_shared_ptr<const multi_child> cptr = test::make_test_shared<multi_child>();
+
+    auto ptr = test::const_pointer_cast<multi_child>(cptr);
+    CHECK(ptr.get() == cptr.get());
+    CHECK(ptr.use_count() == 2);
+
+    ptr->a = 42;
+    ptr->x = 1;
+    ptr->y = 2;
+
+    test::test_shared_ptr<obj> as_obj = ptr;
+    test::test_shared_ptr<vec> as_vec = ptr;
+
+    CHECK(ptr.use_count() == 4);
+
+    auto sc = test::static_pointer_cast<multi_child>(as_vec);
+    CHECK(sc.get() == ptr.get());
+    CHECK(ptr.use_count() == 5);
+
+    auto dc = test::dynamic_pointer_cast<multi_child>(as_obj);
+    CHECK(dc.get() == ptr.get());
+    CHECK(ptr.use_count() == 6);
+
+    auto fdc = test::dynamic_pointer_cast<child>(as_obj);
+    CHECK_FALSE(fdc);
+    CHECK(ptr.use_count() == 6);
+
+    test::test_shared_ptr<void> erased = ptr;
+
+    auto rc = test::reinterpret_pointer_cast<multi_child>(erased);
+    CHECK(rc.get() == ptr.get());
+    CHECK(ptr.use_count() == 8);
+
+    CHECK(stats.total == 1);
+    CHECK(stats.living == 1);
+}
