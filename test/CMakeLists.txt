@@ -4,8 +4,8 @@
 cmake_minimum_required(VERSION 3.14)
 include(../cmake/get_cpm.cmake)
 
-CPMAddPackage(gh:iboB/doctest-util@0.1.3)
-CPMAddPackage(gh:iboB/splat@1.3.3)
+CPMAddPackage(gh:iboB/doctest-util@0.1.4)
+CPMAddPackage(gh:iboB/splat@1.3.5)
 
 find_package(Threads REQUIRED)
 
